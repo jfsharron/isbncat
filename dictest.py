@@ -1,17 +1,3 @@
-"""
-================================================================================
- Program:
- Software Engineer:
- Date:
-
- Purpose:
-
-
-
-compilation file to create full ISBN
-================================================================================
-"""
-
 import sys
 #from isbntools.app import *
 import pandas
@@ -32,6 +18,7 @@ sh = wrkbk.active
 bad_list = []
 good_list = []
 genre_list = []
+good_dict = {"isbn":[],"year":[],"publisher":[],"author":[],"title":[]}
 
 try:
     connection = mysql.connector.connect(user='jfsharron', password='marie151414',
@@ -46,18 +33,6 @@ try:
         print("You're connected to database: ", record)
 except Error as e:
     print("Error while connecting to MySQL", e)
-    #finally:
-    #    if connection.is_connected():
-    #        cursor.close()
-    #        connection.close()
-    #        print("MySQL connection is closed")
-
-#isbn
-#year 
-#publisher
-#author
-#title
-
 
 # Input Variables
 def createLists():
@@ -138,58 +113,42 @@ def getInfo():
         
             cursor.execute(mySql_insert_query, data)
             connection.commit()
-            #print(cursor.rowcount, "Record successfully inserted into isbn")
+            print(cursor.rowcount, "Record successfully inserted into isbn")
+
+
+
+
+
+
+
+
+            #good_dict["isbn"].append(isbn)
+            #good_dict["year"].append(year)
+            #good_dict["publisher"].append(publisher)
+            #good_dict["author"].append(author)
+            #good_dict["title"].append(title)
+
+
+    #for i in good_dict:
+    #    mySql_insert_query = (
+    #    "INSERT INTO isbn (isbn, year, publisher, author, title)"
+    #    "VALUES (%s, %s, %s, %s, %s)"
+    #    )
+    #    data = (isbn, year, publisher, author, title)
+    #    #cursor = connection.cursor()
+    #    cursor.execute(mySql_insert_query, data)
+    #    connection.commit()
+    #    print(cursor.rowcount, "Record successfully inserted into isbn")
+        
             
+            
+            #print ("Author(s):\t", author)
+            #print ("Title:\t\t", title)
+            #print ("ISBN:\t\t", isbn13)
+            #print ("Year:\t\t", year)
+            #print ("Publisher:\t", publisher)
 
-# ==============================================================================
 
-def exportBad():
-    """
-    ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    
-    ============================================================================
-    """
-    with open(r'bad_list.txt', 'w') as fp:
-        for i in bad_list:
-            fp.write("%s\n" % i)
-    
-    fp.close()
-
-def dbConnect():
-    """
-    ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    
-    ============================================================================
-    """
-    try:
-        connection = mysql.connector.connect(user='jfsharron', password='marie151414',
-        host='192.168.2.107', database='isbn22')
-        if connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_Info)
-            global cursor
-            cursor = connection.cursor()
-            cursor.execute("select database();")
-            record = cursor.fetchone()
-            print("You're connected to database: ", record)
-
-    except Error as e:
-        print("Error while connecting to MySQL", e)
-    #finally:
-    #    if connection.is_connected():
-    #        cursor.close()
-    #        connection.close()
-    #        print("MySQL connection is closed")
 
 
 def exportDb():
@@ -204,20 +163,41 @@ def exportDb():
     ============================================================================
     """
 
+    
 
+    for j in good_dict:
 
-    for i in good_list:
-        mySql_insert_query = (
-        "INSERT INTO isbn (isbn, year, publisher, author, title)"
-        "VALUES (%s, %s, %s, %s, %s)"
-        )
-        data = (isbn13, year, publisher, author, title)
-        #cursor = connection.cursor()
-        cursor.execute(mySql_insert_query, data)
-        connection.commit()
-        print(cursor.rowcount, "Record successfully inserted into isbn")
-        #cursor.close()
+        #j = 1
 
+        print(good_dict.get('isbn'))
+        #year = good_dict.get('year'[j])
+        #publisher = good_dict.get('publisher'[j])
+        #author = good_dict.get('author'[j])
+        #title = good_dict.get('title'[j])
+        
+        
+        
+        
+        #data = (isbn, year, publisher, author, title)
+
+        #mySql_insert_query = (
+        #"INSERT INTO isbn (isbn, year, publisher, author, title)"
+        #"VALUES (%s, %s, %s, %s, %s)"
+        #)
+        ##data = (isbn, year, publisher, author, title)
+        ##cursor = connection.cursor()
+        #cursor.execute(mySql_insert_query, data)
+        #connection.commit()
+        #print(cursor.rowcount, "Record successfully inserted into isbn")
+
+        #print(data)
+
+        #print(isbn)
+
+        
+        
+        #j = j + 1
+        #cursor.close()            
 
 def main():
     """
@@ -233,14 +213,11 @@ def main():
     #dbConnect()
     createLists()
     getInfo()
-    exportBad()
+    #exportBad()
     #exportDb()
     #print(good_list)
-    print("Closing Database Connection . . .")
-    cursor.close()
-    connection.close()
-    print("bye . . .")
+    #print(good_dict)
+    
 
 if __name__ == "__main__":
     main()
-
