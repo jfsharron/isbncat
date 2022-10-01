@@ -13,7 +13,6 @@ compilation file to create full ISBN
 """
 
 import sys
-#from isbntools.app import *
 import pandas as pd
 from isbnlib import meta
 from isbnlib.registry import bibformatters
@@ -30,7 +29,6 @@ dataframeName = "dataframe.xlsx"
 dbIsbnxls = "dbxls.xlsx"
 # load excel with its path
 wrkbk = openpyxl.load_workbook(workbookName)
-#dframe = openpyxl.load_workbook(dataframeName)
   
 sh = wrkbk.active
 
@@ -56,18 +54,6 @@ try:
         print("You're connected to database: ", record)
 except Error as e:
     print("Error while connecting to MySQL", e)
-    #finally:
-    #    if connection.is_connected():
-    #        cursor.close()
-    #        connection.close()
-    #        print("MySQL connection is closed")
-
-#isbn
-#year 
-#publisher
-#author
-#title
-
 
 # Input Variables
 def createLists():
@@ -83,11 +69,8 @@ def createLists():
     """
 
     # iterate through excel and display data
-    #for row in sh.iter_rows(min_row=2, min_col=1, max_row=sh.max_row, max_col=1):
     for i in isbn_list:
         isbn = i
-        #for cell in row:
-        #    isbn = str(cell.value)
 
         SERVICE = "openl"
         bibtex = bibformatters["bibtex"]
@@ -97,15 +80,6 @@ def createLists():
             bad_list.append(isbn)
         else:
             good_list.append(isbn)
-
-    #for row in sh.iter_rows(min_row=2, min_col=2, max_row=sh.max_row, max_col=2):
-    #    for cell in row:
-    #        genre = str(cell.value)
-    #        genre_list.append(genre)
-
-    #print("bad list ", bad_list)
-    #print("good list ", good_list)
-    #print("genre list ", genre_list)
 
     # ==========================================================================
 
@@ -120,7 +94,7 @@ def getInfo():
     ============================================================================
     """
     for i in good_list:
-        #for cell in row:
+
             isbn = i
 
             SERVICE = "openl"
@@ -149,7 +123,7 @@ def getInfo():
             cursor = connection.cursor()
             cursor.execute(mySql_insert_query, data)
             connection.commit()
-            #print(cursor.rowcount, "Record successfully inserted into isbn")
+            
             
 
 # ==============================================================================
@@ -196,57 +170,6 @@ def dbConnect():
 
     except Error as e:
         print("Error while connecting to MySQL", e)
-    #finally:
-    #    if connection.is_connected():
-    #        cursor.close()
-    #        connection.close()
-    #        print("MySQL connection is closed")
-
-
-def exportDb():
-    """
-    ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    
-    ============================================================================
-    """
-
-    for i in good_list:
-        #for cell in row:
-        isbn = i
-        SERVICE = "openl"
-        bibtex = bibformatters["bibtex"]
-        
-        meta_dict = meta(isbn, service='default')
-        aut = str(meta_dict['Authors'])
-        aut = aut.replace("[","")
-        aut = aut.replace("]","")
-        author = aut.replace("'","")
-        title = meta_dict['Title']
-        isbn = meta_dict['ISBN-13']
-        year = meta_dict['Year']
-        publisher = meta_dict['Publisher']
-
-
-        #print("GOOOOOOOOD")
-        #print(good_list)
-    
-        mySql_insert_query = (
-        "INSERT INTO isbn (isbn, year, publisher, author, title)"
-        "VALUES (%s, %s, %s, %s, %s)"
-        )
-        data = (isbn, year, publisher, author, title)
-        #cursor = connection.cursor()
-        cursor.execute(mySql_insert_query, data)
-        connection.commit()
-        print(cursor.rowcount, "Record successfully inserted into isbn")
-        #cursor.close()
-
-    # ==========================================================================
 
 def preProcess():
     """
@@ -262,10 +185,6 @@ def preProcess():
     
     print("Checking for duplicates in source file . . .")
 
-    #for row in sh.iter_rows(min_row=2, min_col=1, max_row=sh.max_row, max_col=2):
-    #    for cell in row:
-    #        isbn = str(cell.value)
-    #        isbn_list.append(isbn)
 
     # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet,
     # import into isbn_list
@@ -302,8 +221,6 @@ def preProcess():
     print("Checking for duplicates in database file . . .")
     query = "SELECT isbn FROM isbn"
     df = sql.read_sql('SELECT isbn FROM isbn', connection)
-    print(df)
-    #dbIsbn_list.append(df)
     df.to_excel(dbIsbnxls)
 
     dbexcel = openpyxl.load_workbook(dbIsbnxls)
@@ -315,51 +232,20 @@ def preProcess():
             dbIsbn_list.append(isbn)
     
     
-    
-    
-    
-    
-    #cursor.execute(query)
-    #rows = cursor.fetchall()
-    #connection.commit()
-    ##print(rows)
-    #dbIsbn_list.append(rows)
-    #
     # compare lists and create intersection list
     # ==========================================================================
     a = (isbn_list)
-    #print("TYPE a")
-    #print(type(a))
-    #print(a)
     b = (dbIsbn_list)
-    #print("TYPE b")
-    #print(type(b))
-    #print(b)
 
-    # ===========================================================================
-    print("LISTS BEFORE INTERSECTION")
-    print(isbn_list)
-    print()
-    print(dbIsbn_list)
-    # ===========================================================================
 
     intersection = set(a).intersection(b)
-    print("Intersection")
-    print(list(intersection))
-
     
 
     # remove intersection list values from isbn_list
-    # ==========================================================================
-    print("BEFORE")
-    print(isbn_list)
-    
+    # ==========================================================================    
     for value in intersection:
         if value in isbn_list:
-            #print("exists")
             isbn_list.remove(value)
-    print("AFTER")
-    print(isbn_list)
 
 #===============================================================================    
 
@@ -374,14 +260,12 @@ def main():
     creates good_list and bad_list from imported .xlsx file
     ============================================================================
     """
-    dbConnect()
+    #dbConnect()
     preProcess()
     createLists()
     getInfo()
     exportBad()
-    #    DELETE FUNCTION    exportDb()
     print("Closing Database Connection . . .")
-    #cursor.close()
     connection.close()
     print("bye . . .")
 
