@@ -48,7 +48,6 @@ try:
             s1=s.replace("$","")
 
         print()
-        continue
 except KeyError:
     bad_list.append(isbn)
     #pass

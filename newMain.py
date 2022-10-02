@@ -1,14 +1,14 @@
 """
 ================================================================================
- Program:
- Software Engineer:
- Date:
+ Program:           isbn2022.py
+ Software Engineer: Jonas SHarron
+ Date:              01-October-2022
 
- Purpose:
-
-
-
-compilation file to create full ISBN
+ Purpose:   This program will process isbn's stored in a file and export them to 
+            a MySQL database.  The program will also check for isbn's that are
+            not represented in the search service and export them to list for
+            evaluation by the user.  A manuel entry and editing method is also 
+            provided for user interaction.
 ================================================================================
 """
 
@@ -24,23 +24,22 @@ import xlsxwriter
 import pandas.io.sql as sql
 
 
+# define external files
+# ======================
 workbookName = "inventory.xlsx"
 dataframeName = "dataframe.xlsx"
 dbIsbnxls = "dbxls.xlsx"
-# load excel with its path
-wrkbk = openpyxl.load_workbook(workbookName)
-  
-sh = wrkbk.active
-
-
 
 # initialize lists
+# =================
 bad_list = []
 good_list = []
 genre_list = []
 isbn_list = []
 dbIsbn_list = []
 
+# establish database connection
+# =============================
 try:
     connection = mysql.connector.connect(user='jfsharron', password='marie151414',
     host='192.168.2.107', database='isbn22')
@@ -55,26 +54,36 @@ try:
 except Error as e:
     print("Error while connecting to MySQL", e)
 
-# Input Variables
+# ==============================================================================
+# user functions
+# ==============================================================================
+
 def createLists():
     """
     ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    creates good_list and bad_list from imported .xlsx file
+    Function:       createLists()
+    Purpose:        filters input data into two lists (good_list and bad_list)
+                    depending on the availability of data in the search service
+                    (filtered by return data from ('Authors') field)
+    Parameter(s):   -None- (processes data in external file)
+    Return:         -None- (propagates data in good_list and bad_list)
     ============================================================================
     """
+    # load data file
+    # ===============
+    wrkbk = openpyxl.load_workbook(workbookName)
+    sh = wrkbk.active
 
-    # iterate through excel and display data
+    # iterate through data file and for existence in search service
     for i in isbn_list:
         isbn = i
 
         SERVICE = "openl"
         bibtex = bibformatters["bibtex"]
         
+        # if data is not available in search service, add isbn to bad_list
+        # otherwise add isbn to good_list
+        # ==================================================================
         meta_dict = meta(isbn, service='default')
         if meta_dict.get('Authors') is None:
             bad_list.append(isbn)
@@ -86,13 +95,15 @@ def createLists():
 def getInfo():    
     """
     ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
+    Function:       getInfo()
+    Purpose:        retrieves information (author, title, isbn, year, publisher)
+                    from search service and propagates MySQL database with hew
+                    record.
+    Parameter(s):   -None- (processes data in good_list)
+    Return:         -None- (exports data to MySQL database)
     ============================================================================
     """
+    # itreate through good_list and retrieve data from search service
     for i in good_list:
 
             isbn = i
@@ -112,9 +123,12 @@ def getInfo():
             year = meta_dict['Year']
             publisher = meta_dict['Publisher']
 
-
+            # define data to retrieve
+            # ========================
             data = (isbn, year, publisher, author, title)
 
+            # SQL query to insert data into to db
+            # ====================================
             mySql_insert_query = (
             "INSERT INTO isbn (isbn, year, publisher, author, title)"
             "VALUES (%s, %s, %s, %s, %s)"
@@ -131,12 +145,11 @@ def getInfo():
 def exportBad():
     """
     ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    
+    Function:       exportBad()
+    Purpose:        exports bad list (isbn's not found in search service) to 
+                    external file for evaluation
+    Parameter(s):   -None- (processes data in bad_list)
+    Return:         -None- (generates external file)    
     ============================================================================
     """
     with open(r'bad_list.txt', 'w') as fp:
@@ -145,49 +158,20 @@ def exportBad():
     
     fp.close()
 
-def dbConnect():
-    """
-    ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    
-    ============================================================================
-    """
-    try:
-        connection = mysql.connector.connect(user='jfsharron', password='marie151414',
-        host='192.168.2.107', database='isbn22')
-        if connection.is_connected():
-            db_Info = connection.get_server_info()
-            print("Connected to MySQL Server version ", db_Info)
-            global cursor
-            cursor = connection.cursor()
-            cursor.execute("select database();")
-            record = cursor.fetchone()
-            print("You're connected to database: ", record)
-
-    except Error as e:
-        print("Error while connecting to MySQL", e)
-
 def preProcess():
     """
     ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
-
-    creates good_list and bad_list from imported .xlsx file
+    Function:       preProcess()
+    Purpose:        looks for and removes duplicate isbn's from import file and 
+                    pre-existing db 
+    Parameter(s):   -None- (reads data from input file and db)
+    Return:         -None- (writes data (duplicates removed) to isbn_list)
     ============================================================================
     """
-    
     print("Checking for duplicates in source file . . .")
 
 
-    # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet,
-    # import into isbn_list
+    # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet
     # ==========================================================================
     data = pd.read_excel(workbookName, usecols = ['isbn'])
     data_first_record = data.drop_duplicates(keep="first")
@@ -201,7 +185,7 @@ def preProcess():
     workbook  = writer.book
     worksheet = writer.sheets['Sheet1']
 
-    # Add some cell formats.
+    # Add numeric cell formats.
     format1 = workbook.add_format({'num_format': '###0'})
 
     worksheet.set_column(1, 1, 18, format1)
@@ -211,12 +195,14 @@ def preProcess():
     dframe = openpyxl.load_workbook(dataframeName)
     sh = dframe.active
 
+    # send dataframe data to isbn_list
+    # =================================
     for row in sh.iter_rows(min_row=2, min_col=2, max_row=sh.max_row, max_col=2):
         for cell in row:
             isbn = str(cell.value)
             isbn_list.append(isbn)
     
-     # create dbIsbn_list from database
+    # create dbIsbn_list from database
     # ==========================================================================
     print("Checking for duplicates in database file . . .")
     query = "SELECT isbn FROM isbn"
@@ -232,7 +218,7 @@ def preProcess():
             dbIsbn_list.append(isbn)
     
     
-    # compare lists and create intersection list
+    # compare isbn_list and dbIsbn_list and create intersection (duplicates) list
     # ==========================================================================
     a = (isbn_list)
     b = (dbIsbn_list)
@@ -241,26 +227,27 @@ def preProcess():
     intersection = set(a).intersection(b)
     
 
-    # remove intersection list values from isbn_list
+    # remove intersection (duplicates) list values from isbn_list
     # ==========================================================================    
     for value in intersection:
         if value in isbn_list:
             isbn_list.remove(value)
 
-#===============================================================================    
+# ==============================================================================
+#  main entry point for program
+#  =============================================================================    
 
 def main():
     """
     ============================================================================
-    Function:
-    Purpose:
-    Parameter(s):
-    Return:
+    Function:       main()
+    Purpose:        entry point to program
+    Parameter(s):   -None-
+    Return:         -None-
 
     creates good_list and bad_list from imported .xlsx file
     ============================================================================
     """
-    #dbConnect()
     preProcess()
     createLists()
     getInfo()
