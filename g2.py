@@ -1,7 +1,7 @@
 """
 ================================================================================
  Program:           newMain.py
- Software Engineer: Jonas Sharron
+ Software Engineer: Jonas SHarron
  Date:              01-October-2022
 
  Purpose:   This program will process isbn's stored in a file and export them to 
@@ -23,6 +23,8 @@ import functools
 import xlsxwriter
 import pandas.io.sql as sql
 import numpy as np
+from openpyxl import load_workbook
+
 
 
 # define external files
@@ -30,15 +32,19 @@ import numpy as np
 workbookName = "inventory.xlsx"
 dataframeName = "dataframe.xlsx"
 dbIsbnxls = "dbxls.xlsx"
-genreWorkbook = "inventory.xlsx"
+genredfWB = "genre.xlsx"
+outGenre = "createGenre.xlsx"
 
 # initialize lists
 # =================
 bad_list = []
 good_list = []
+genre_list = []
 isbn_list = []
 dbIsbn_list = []
 dup_list = []
+genre_temp = []
+genre_isbn = []
 
 # establish database connection
 # =============================
@@ -175,7 +181,7 @@ def preProcess():
 
 
     # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet
-    data = pd.read_excel(workbookName, usecols = ['isbn'])
+    data = pd.read_excel(workbookName, usecols = ['isbn', 'genre'])
     data_first_record = data.drop_duplicates(keep="first")
 
     writer = pd.ExcelWriter(dataframeName, engine='xlsxwriter')
@@ -221,9 +227,7 @@ def preProcess():
     a = (isbn_list)
     b = (dbIsbn_list)
 
-
-    intersection = set(a).intersection(b)
-    
+    intersection = set(a).intersection(b)    
 
     # remove intersection (duplicates) list values from isbn_list
     for value in intersection:
@@ -231,47 +235,129 @@ def preProcess():
             dup_list.append(value)
             isbn_list.remove(value)
 
-    # completion of duplicate check message
-    print("Duplicate check completed, duplicates removed and exported to dup_list")
+    # create genre_list
+    # TODO
+    #cross reference isbn's in isbn_list against dataframe and retrieve genre
+    #intialdf = pd.DataFrame(isbn_list, index=['isbns', 'two'])
+    intialdf1 = pd.DataFrame(isbn_list)
+    writer = pd.ExcelWriter('intialdf1.xlsx', engine = 'xlsxwriter')
+    #intialdf1 = intialdf1.to_string(index=False)
+    intialdf1.to_excel(writer)
+    #writer.write(0, 0, 'isbns')
+    #writer.write('B1', 'isbns')
+    writer.save()
+    writer.close()
 
-def getGenre():
-    """
-    ============================================================================
-    Function:       getGenre()
-    Purpose:        imports genre information into MySQL database from external 
-                    file
-    Parameter(s):   -None- (reads data from input file and db)
-    Return:         -None- (writes genre data to MySQL)
-    ============================================================================
-    """    
-       
-    # create datafrane from external file
-    gframe = openpyxl.load_workbook(genreWorkbook)
-    data = gframe.active
-    
-    # define max row with x and y variables
-    x = data.max_row
-    y = 'B' + str(x) 
-    
-    cells = data['A2' : y]
+    #excelDF = pd.ExcelFile('intialdf1.xlsx')
+    #df1 = pd.read_excel(excelDF, 'Sheet1')
+    #print(df1.columns)
+    workbook = xlsxwriter.Workbook('intialdf1.xlsx')
+    sheet = "Sheet1"
+    #sheet.columns = sheet.iloc[0, :]
+    sheet.drop(sheet.index[0], inplace = True)
+    #workbook.write('B1', 'isbns')
+    workbook.save()
+    workbook.close()
 
-    # iterate through external file to retrieve genre values
-    for c1, c2 in cells:
-        gisbn = (c1.value)
-        gisbn = str(gisbn)
-        genre = (c2.value)
-        genre = str(genre)
-
-        sqldata = (genre, gisbn)
-
-        # define MySQL query and import genre values into database
-        genre_query = ("UPDATE isbn SET genre = (%s) WHERE isbn = (%s)")
-        
-        cursor = connection.cursor()
-        cursor.execute(genre_query, sqldata)
-        connection.commit()
+    #workbook = load_workbook(filename='intialdf1.xlsx')
+    #sheet = "Sheet1"
+    #columnNames = intialdf1.iloc[0]
+    #intialdf1 = intialdf1[1:]
+    #intialdf1.columns = columnNames
+    ##sheet.delete_rows(2)
+    ##workbook.save()
+    ##sheet["B2"] = "isbns"
+    #workbook.save(filename='intialdf12.xlsx')
 #
+    #workbook = load_workbook(filename='intialdf12.xlsx')
+    #sheet = "Sheet1"
+    #sheet.delete_rows(2)
+    #workbook.save()
 
+#
+    #writer.close()
+    #workbook = xlsxwriter.Workbook('intialdf1.xlsx')
+    #worksheet.write(0, 0, 'isbns')
+    #workbook.close()
+    #intialdf = intialdf1.rename(columns={'0':'isbns'})
+    infodf = pd.read_excel(workbookName)
+
+    #intialdf.rename(columns = {'0':'isbns'}, inplace = True)
+    #df_3 = pd.merge(intialdf, infodf[['isbns', 'isbn']], on='isbns', how='left')
+
+    #print(intialdf.columns)
+    #print(infodf.columns)
+    #print(df_3)
+
+    #writer = pd.ExcelWriter(genredfWB, engine='xlsxwriter')
+    #intialdf.to_excel(writer, sheet_name = 'Sheet 1', index = False)
+    #intialdf.rename(columns={'0':'isbns'}, inplace = True)
+    #intialdf.index.name = 'isbns'
+    #writer.save()
+    #intialdf = pd.read_excel(genredfWB)
+    #intialdf = intialdf.reindex( index = ['isbns'])
+    #
+    #infodf = pd.read_excel(workbookName)
+#
+    #intialdf.rename(columns={'0':'isbns'}, inplace = True)
+    #df_3 = pd.merge(intialdf, infodf[['isbns', 'isbn']], on = 'isbns', how = 'left')
+    #df_3 = pd.merge(intialdf, infodf[[0 , 'isbn']], on = 0, how = 'right')
+    #print(df_3)
+
+
+
+    #print()
+    #print(intialdf.index.name)
+    #print()
+    #print(intialdf.columns)
+    #print()
+    #print(infodf.columns)
+
+
+    #intialdf = pd.read_excel(workbookName, usecols = ['genre'])
+    #writer = pd.ExcelWriter('test.xlsx', engine='xlsxwriter')
+    #intialdf.to_excel(writer, sheet_name = 'Sheet 1', index = False)
+    ##intialdf.drop(columns = ['B'])
+    #writer.save()
+#
+    #intialdf2 = openpyxl.load_workbook('test.xlsx')
+    #sh = dframe.active
+    #for row in sh.iter_rows(min_row=2, min_col=1, max_row=sh.max_row, max_col=1):
+    #    for cell in row:
+    #        isbn = str(cell.value)
+    #        genre_temp.append(isbn)
+    #
+
+
+   # infodf = pd.read_excel(workbookName)
+   # for i in isbn_list:
+   #     if i in genre_temp:
+   #         genre_list.append(genre)
+   #     else:
+   #         genre_list.append("No")
+#
+   # print(genre_list)
+
+
+
+
+
+
+
+
+
+
+
+    ## completion of duplicate check message
+    #print("Duplicate check completed, duplicates removed and exported to dup_list")
+    #print("GENRE TEMP")
+    #print(genre_temp)
+    #print()
+    #print("ISBN")
+    #print(isbn_list)
+    #print()
+    #print("GENRE ISBN")
+    #print(genre_isbn)
 
 # ==============================================================================
 #  main entry point for program
@@ -287,10 +373,9 @@ def main():
     ============================================================================
     """
     preProcess()
-    createLists()
-    getInfo()
-    exportBad()
-    #getGenre()
+    #createLists()
+    #getInfo()
+    #exportBad()
     print("Closing Database Connection . . .")
     connection.close()
     print("bye . . .")

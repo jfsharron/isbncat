@@ -1,7 +1,7 @@
 """
 ================================================================================
  Program:           newMain.py
- Software Engineer: Jonas Sharron
+ Software Engineer: Jonas SHarron
  Date:              01-October-2022
 
  Purpose:   This program will process isbn's stored in a file and export them to 
@@ -22,7 +22,11 @@ from mysql.connector import Error
 import functools
 import xlsxwriter
 import pandas.io.sql as sql
-import numpy as np
+import xlrd
+import csv
+#import dataconverters.commas as commas
+#import urllib3 as urllib2
+
 
 
 # define external files
@@ -30,15 +34,16 @@ import numpy as np
 workbookName = "inventory.xlsx"
 dataframeName = "dataframe.xlsx"
 dbIsbnxls = "dbxls.xlsx"
-genreWorkbook = "inventory.xlsx"
 
 # initialize lists
 # =================
 bad_list = []
 good_list = []
+genre_list = []
 isbn_list = []
 dbIsbn_list = []
 dup_list = []
+#isbn_dict = {"isbn", "genre"}
 
 # establish database connection
 # =============================
@@ -71,10 +76,19 @@ def createLists():
     Return:         -None- (propagates data in good_list and bad_list)
     ============================================================================
     """
-    # iterate through data file and for existence in search service
+     # iterate through data file and for existence in search service
     print("Checking search service for data file information")
-    for i in isbn_list:
-        isbn = i
+    
+    for value in isbn_dict.values():
+        isbn = value
+
+    #for k, v in isbn_dict.items():
+    #    if k == "isbn":
+    #        print(k)
+#
+
+    #for i in isbn_dict:
+    #    isbn = isbn_dict.isbn()
 
         SERVICE = "openl"
         bibtex = bibformatters["bibtex"]
@@ -175,7 +189,7 @@ def preProcess():
 
 
     # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet
-    data = pd.read_excel(workbookName, usecols = ['isbn'])
+    data = pd.read_excel(workbookName, usecols = ['isbn', 'genre'])
     data_first_record = data.drop_duplicates(keep="first")
 
     writer = pd.ExcelWriter(dataframeName, engine='xlsxwriter')
@@ -194,14 +208,81 @@ def preProcess():
 
     writer.save()
 
-    dframe = openpyxl.load_workbook(dataframeName)
-    sh = dframe.active
+    read_file = pd.read_excel(dataframeName)
 
-    # send dataframe data to isbn_list
-    for row in sh.iter_rows(min_row=2, min_col=2, max_row=sh.max_row, max_col=2):
-        for cell in row:
-            isbn = str(cell.value)
-            isbn_list.append(isbn)
+    read_file.to_csv("isbn.csv", index = None, header = True)
+
+    csvdf = pd.read_csv("isbn.csv")
+
+    with open("isbn.csv", "r") as source:
+        reader = csv.reader(source)
+
+        with open("output.csv", "w") as result:
+            writer = csv.writer(result)
+            for r in reader:
+
+                format1 = workbook.add_format({'num_format': '###0'})   
+                worksheet.set_column(2, 2, 18, format1) 
+                writer.writerow((r[1], r[2]))
+
+    output = pd.read_csv("output.csv")
+
+    #print(csvdf)
+
+    #csvdf.drop("Unnamed: 0", inplace = True, axis = 1)
+
+    #read_file.to_csv("isbn2.csv", index = False, header = True)
+
+    #isbn_dict = pd.DataFrame(data, columns = ['isbn', 'genre'])
+
+    isbn_dict = output.to_dict()
+
+    print(isbn_dict)
+
+    #filename = 'isbn.csv'
+    #with open(filename) as f:
+    #    f_writer = csv.writer
+#
+#
+#
+    #    #records, metadata = commas.parse(f)
+    #    for row in f:
+    #        print("this is row in dictionary:"+row)
+
+
+
+    #wb = xlrd.open_workbook(dataframeName)
+    #sh = writer.sheets['Sheet1']
+    #isbn = isbn_dict((sh.col_values(1, 0, 138), (sh.col_values(2, 0, 138))))
+
+
+    #for i in range(64):
+    #    cell_value_class = sh.cell(i,2).value
+    #    cell_value_id = sh.cell(i,0).value
+    #    d[cell_value_class] = cell_value_id
+ 
+    #xls = dataframeName
+    #data = xls.parse(xls.sheet_names[0])
+    #print(data.to_dict())
+
+
+    #df = pd.read_excel(dataframeName)
+
+    ###for row in df:
+    ###    isbn_dict = df.to_dict('isbn', 'genre')
+    ###print(isbn_dict)
+
+    #dframe = openpyxl.load_workbook(dataframeName)
+    #sh = dframe.active
+#
+    ## send dataframe data to isbn_dict
+    #dframe.to_dict(isbn_dict)
+
+
+    #for row in sh.iter_rows(min_row=2, min_col=2, max_row=sh.max_row, max_col=2):
+    #    for cell in row:
+    #        isbn = str(cell.value)
+    #        isbn_list.append(isbn)
     
     # create dbIsbn_list from database
     print("Checking for duplicates in database file . . .")
@@ -218,7 +299,7 @@ def preProcess():
             dbIsbn_list.append(isbn)
     
     # compare isbn_list and dbIsbn_list and create intersection (duplicates) list
-    a = (isbn_list)
+    a = (isbn_dict)
     b = (dbIsbn_list)
 
 
@@ -233,45 +314,6 @@ def preProcess():
 
     # completion of duplicate check message
     print("Duplicate check completed, duplicates removed and exported to dup_list")
-
-def getGenre():
-    """
-    ============================================================================
-    Function:       getGenre()
-    Purpose:        imports genre information into MySQL database from external 
-                    file
-    Parameter(s):   -None- (reads data from input file and db)
-    Return:         -None- (writes genre data to MySQL)
-    ============================================================================
-    """    
-       
-    # create datafrane from external file
-    gframe = openpyxl.load_workbook(genreWorkbook)
-    data = gframe.active
-    
-    # define max row with x and y variables
-    x = data.max_row
-    y = 'B' + str(x) 
-    
-    cells = data['A2' : y]
-
-    # iterate through external file to retrieve genre values
-    for c1, c2 in cells:
-        gisbn = (c1.value)
-        gisbn = str(gisbn)
-        genre = (c2.value)
-        genre = str(genre)
-
-        sqldata = (genre, gisbn)
-
-        # define MySQL query and import genre values into database
-        genre_query = ("UPDATE isbn SET genre = (%s) WHERE isbn = (%s)")
-        
-        cursor = connection.cursor()
-        cursor.execute(genre_query, sqldata)
-        connection.commit()
-#
-
 
 # ==============================================================================
 #  main entry point for program
@@ -288,10 +330,9 @@ def main():
     """
     preProcess()
     createLists()
-    getInfo()
-    exportBad()
-    #getGenre()
-    print("Closing Database Connection . . .")
+    #getInfo()
+    #exportBad()
+    #print("Closing Database Connection . . .")
     connection.close()
     print("bye . . .")
 
