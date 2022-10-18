@@ -43,8 +43,8 @@ dup_list = []
 # establish database connection
 # =============================
 try:
-    connection = mysql.connector.connect(user='jfsharron', password='marie151414',
-    host='192.168.2.107', database='isbn22')
+    connection = mysql.connector.connect(user='username', password='password',
+    host='dbhost', database='db')
     if connection.is_connected():
         db_Info = connection.get_server_info()
         print("Connected to MySQL Server version ", db_Info)
