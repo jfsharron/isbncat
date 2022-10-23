@@ -9,6 +9,33 @@
             not represented in the search service and export them to list for
             evaluation by the user.  A manuel entry and editing method is also 
             provided for user interaction.
+
+Related Files:      
+            variable            file                purpose
+            --------------------------------------------------------------------
+            workbookName        inventory.xlsx      -data input file
+            dataframeName       dataframe.xlsx      -dataframe created to remove
+                                                     duplicate isbn's from data
+                                                     input file
+            dbIsbnxls           dbxls.xlsx          -dataframe created from MySQL 
+                                                     to create dbIsbn list 
+
+Lists:
+            isbn_list[]         -list created from input file (workbookName), 
+                                 duplicates removed
+            
+            bad_list and good_list are created from isbn_list
+            --------------------------------------------------------------------
+            bad_list[]          -list of isbn's not available in search service
+            good_list[]         -list of isbn's available in search service
+
+            
+            dbIsbn_list[]       -list generated from records in MySQL database
+            dup_list[]          -list of duplicate values found in both 
+                                 dbIsbn_list and isbn_list (these values are 
+                                 removed from the isbn_list) 
+
+        * these lists are written to text files in the log directory 
 ================================================================================
 """
 
@@ -23,33 +50,66 @@ import functools
 import xlsxwriter
 import pandas.io.sql as sql
 import numpy as np
+import pickle
+from numpy import loadtxt
+from prettytable import from_db_cursor
+from prettytable import PrettyTable
+import datetime
+import os
+from termcolor import colored, cprint 
+from colorama import Fore, Back, Style 
+from tabulate import tabulate
+from win32printing import Printer
+import fpdf
+import colorama
+from colorama import Fore, Back, Style
+import getopt
+
+# retrieve stored information
+# ===========================
+filename = "dump"
+file = open(filename, 'rb')
+new = pickle.load(file)
+lines = loadtxt(new, dtype=str, comments="#", delimiter=",", unpack=False)
+file.close()
+
+USER        = str(lines[0])
+XWORD       = str(lines[1])
+HOST        = str(lines[2])
+DATABASE    = str(lines[3])
+DATAFILE    = str(lines[4])
+FNAME       = str(sys.argv[1])
 
 
 # define external files
 # ======================
-workbookName = "inventory.xlsx"
-dataframeName = "dataframe.xlsx"
-dbIsbnxls = "dbxls.xlsx"
-genreWorkbook = "inventory.xlsx"
+workbookName    = DATAFILE
+dataframeName   = "dataframe.xlsx"
+dbIsbnxls       = "dbxls.xlsx"
 
 # initialize lists
 # =================
-bad_list = []
-good_list = []
-isbn_list = []
-dbIsbn_list = []
-dup_list = []
+bad_list        = []
+good_list       = []
+isbn_list       = []
+dbIsbn_list     = []
+dup_list        = []
 
 # establish database connection
 # =============================
 try:
-    connection = mysql.connector.connect(user='username', password='password',
-    host='dbhost', database='db')
-    if connection.is_connected():
-        db_Info = connection.get_server_info()
+    SUSERNAME     = str(lines[0])
+    SPASSWORD     = str(lines[1])
+    SHOST         = str(lines[2])
+    SDATABASE     = str(lines[3])
+
+    CONNECTION = mysql.connector.connect(user=SUSERNAME, password=SPASSWORD,
+    host=SHOST, database=SDATABASE)
+    if CONNECTION.is_connected():
+        db_Info = CONNECTION.get_server_info()
         print("Connected to MySQL Server version ", db_Info)
         global cursor
-        cursor = connection.cursor()
+        cursor = CONNECTION.cursor()
         cursor.execute("select database();")
         record = cursor.fetchone()
         print("You're connected to database: ", record)
@@ -104,6 +164,33 @@ def getInfo():
     Return:         -None- (exports data to MySQL database)
     ============================================================================
     """
+    # pick search service
+    flag = True
+    while flag == True:
+        print("")
+        print("Please select search service: ")
+        print("1\tGoogle Books")
+        print("2\tWikipedia")
+        print("3\tOpenLibrary")
+        print("")
+        print("Press ENTER to select default (OpenLibrary)")
+        option = input("selection: ") or '3'
+
+        if option == '1':
+            SERVICE = "goob"
+            flag = False
+        elif option == '2':
+            SERVICE = "wiki"
+            flag = False
+        elif option == '3':
+            SERVICE ="openl"
+            flag = False
+        else:
+            print("Please make a valid selection")
+        print("")
+    
+    
+    
     # iterate through good_list and retrieve data from search service
     print("Connecting to search service . . .")
     print("Retrieving information for good_list . . .")
@@ -111,7 +198,7 @@ def getInfo():
 
             isbn = i
 
-            SERVICE = "openl"
+            #SERVICE = "openl"
 
             bibtex = bibformatters["bibtex"]
             
@@ -135,9 +222,9 @@ def getInfo():
             "VALUES (%s, %s, %s, %s, %s)"
             )
         
-            cursor = connection.cursor()
+            cursor = CONNECTION.cursor()
             cursor.execute(mySql_insert_query, data)
-            connection.commit()
+            CONNECTION.commit()
 
     # completion message
     print("Available information added to SQL database")            
@@ -175,7 +262,7 @@ def preProcess():
 
 
     # remove duplicates from isbn spreadsheet, save in dataframe spreadsheet
-    data = pd.read_excel(workbookName, usecols = ['isbn'])
+    data = pd.read_excel(workbookName, sheet_name = 'data', usecols = ['isbn'])
     data_first_record = data.drop_duplicates(keep="first")
 
     writer = pd.ExcelWriter(dataframeName, engine='xlsxwriter')
@@ -206,7 +293,7 @@ def preProcess():
     # create dbIsbn_list from database
     print("Checking for duplicates in database file . . .")
     query = "SELECT isbn FROM isbn"
-    df = sql.read_sql('SELECT isbn FROM isbn', connection)
+    df = sql.read_sql('SELECT isbn FROM isbn', CONNECTION)
     df.to_excel(dbIsbnxls)
 
     dbexcel = openpyxl.load_workbook(dbIsbnxls)
@@ -246,7 +333,7 @@ def getGenre():
     """    
        
     # create datafrane from external file
-    gframe = openpyxl.load_workbook(genreWorkbook)
+    gframe = openpyxl.load_workbook(workbookName)
     data = gframe.active
     
     # define max row with x and y variables
@@ -267,10 +354,344 @@ def getGenre():
         # define MySQL query and import genre values into database
         genre_query = ("UPDATE isbn SET genre = (%s) WHERE isbn = (%s)")
         
-        cursor = connection.cursor()
+        cursor = CONNECTION.cursor()
         cursor.execute(genre_query, sqldata)
-        connection.commit()
-#
+        CONNECTION.commit()
+
+def menu():
+    """
+    ============================================================================
+    Function:       menu()
+    Purpose:        entry point to allow user interaction with program
+    Parameter(s):   -None-
+    Return:         users desired action
+    ============================================================================
+    """
+    os.system('cls')
+
+    # format screen
+    # --------------
+    now = datetime.datetime.now()
+    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+    print("isbn-22 v0.01".rjust(80))
+    print("--------------------".rjust(80))
+    print(Style.RESET_ALL)
+
+    # main menu
+    #----------
+    goAgain = 1
+
+    while goAgain == 1:
+        print('')
+        print(Fore.GREEN + 'MAIN MENU')
+        print(Fore.GREEN + '-------------------')
+        print(Style.RESET_ALL)
+        print('1\tSet System Parameters')
+        print('2\tProgram Functions')
+        print('3\tReports')
+        print('')
+        print('')
+        print('')
+        print(Fore.RED + '0\tEXIT')
+        print(Style.RESET_ALL)
+        print('')
+        print('')    
+
+        # menu options based on user input
+        # ---------------------------------
+        menuOption = input("selection: ")
+
+        if menuOption == '1':
+            sysParmMenu()
+        elif menuOption == '2':
+            programFunctMenu()
+        elif menuOption == '3':
+            reportsMenu() 
+        elif menuOption == '0':    
+            goAgain = 0 
+
+        os.system('cls')   
+
+def sysParmMenu():
+    """
+    ============================================================================
+    Function:       sysParmMenu()
+    Purpose:        provides user options for editing program parameters
+    Parameter(s):   -None- 
+    Return:         users desired action
+    ============================================================================
+    """
+    goAgain = 1
+ 
+    # global values for MySQL
+    # -----------------------
+    global USER 
+    global XWORD
+    global HOST
+    global DATABASE
+    global DATAFILE
+    global FNAME
+    
+    # system parameters menu
+    # ----------------------
+    while goAgain == 1:
+        os.system('cls')
+        now = datetime.datetime.now()
+        print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+        print("isbn-22 v0.01".rjust(80))
+        print("--------------------".rjust(80))
+        print(Style.RESET_ALL)
+        print('')
+        print(Fore.GREEN + 'SET SYSTEM PARAMETERS')
+        print(Fore.GREEN + '-------------------')
+        print(Style.RESET_ALL)
+        print(Fore.RED +"PLEASE NOTE: if the values filename, location, or values "
+            "are edited, the program will have to be restarted for the changes to "
+            "take effect")
+        print(Style.RESET_ALL)
+        print('')
+        print('1\tDisplay Values File Filepath and Name')
+        print('2\tDisplay and Edit Values File')
+        print('')
+        print('')
+        print('')
+        print(Fore.RED + '0\tRETURN')
+        print(Style.RESET_ALL)
+        print('')
+        print('')    
+
+        # menu options based on user input
+        # ---------------------------------
+        menuOption = input("selection: ")
+
+        if menuOption == '1':                     
+            print('')
+            print(Fore.YELLOW + str(FNAME)) 
+            print(Style.RESET_ALL)
+            print('')
+            wait = input("Press ENTER to return")
+        elif menuOption == '2':
+            goAgain2 = 1
+            while goAgain2 == 1:
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print('')
+                print(Fore.GREEN + 'VALUES FILE')
+                print(Fore.GREEN + '-------------------')
+                print(Style.RESET_ALL)
+                print(Fore.RED + "These values should be kept secure and not "
+                     "shared")
+                print(Style.RESET_ALL)
+                print('')
+                # submenu for MySQL options
+                # -------------------------
+                print('1\tSet MySQL username')
+                print('2\tDisplay MySQL username')
+                print('3\tMySQL password')
+                print('4\tDisplay MySQL password')
+                print('5\tSet MySQL host address')
+                print('6\tDisplay MySQL host address')
+                print('7\tSet MySQL database name')
+                print('8\tDisplay MySQL database name')
+                print('9\tSet data file name and location')
+                print('10\tDisplay data file name and location')
+                print('')
+                print('')
+                print('')
+                print(Fore.RED + '0\tRETURN')
+                print(Style.RESET_ALL)
+                print('')
+                print('')    
+
+                # menu options based on user input
+                # ---------------------------------
+                submenuOption = input("selection: ")
+                if submenuOption == '1':
+                    os.system('cls')
+                    now = datetime.datetime.now()
+                    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                    print("isbn-22 v0.01".rjust(80))
+                    print("--------------------".rjust(80))
+                    print(Style.RESET_ALL)
+                    USER = input("Please Enter your MySQL username: ")
+                if submenuOption == '2':
+                    print('')
+                    print(Fore.YELLOW + USER) 
+                    print(Style.RESET_ALL)
+                    print('')
+                    wait = input("Press ENTER to return")
+                if submenuOption == '3':
+                    os.system('cls')
+                    now = datetime.datetime.now()
+                    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                    print("isbn-22 v0.01".rjust(80))
+                    print("--------------------".rjust(80))
+                    print(Style.RESET_ALL)
+                    XWORD = input("Please Enter your MySQL password: ")
+                if submenuOption == '4':
+                    print('')
+                    print(Fore.YELLOW + XWORD) 
+                    print(Style.RESET_ALL)
+                    print('')
+                    wait = input("Press ENTER to return")
+                if submenuOption == '5':
+                    os.system('cls')
+                    now = datetime.datetime.now()
+                    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                    print("isbn-22 v0.01".rjust(80))
+                    print("--------------------".rjust(80))
+                    print(Style.RESET_ALL)
+                    HOST = input("Please Enter your MySQL host address: ")
+                if submenuOption == '6':
+                    print('')
+                    print(Fore.YELLOW + HOST) 
+                    print(Style.RESET_ALL)
+                    print('')
+                    wait = input("Press ENTER to return")
+                if submenuOption == '7':
+                    os.system('cls')
+                    now = datetime.datetime.now()
+                    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                    print("isbn-22 v0.01".rjust(80))
+                    print("--------------------".rjust(80))
+                    print(Style.RESET_ALL)
+                    DATABASE = input("Please Enter your MySQL database name: ")
+                if submenuOption == '8':
+                    print('')
+                    print(Fore.YELLOW + DATABASE) 
+                    print(Style.RESET_ALL)
+                    print('')
+                    wait = input("Press ENTER to return")
+                if submenuOption == '9':
+                    os.system('cls')
+                    now = datetime.datetime.now()
+                    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                    print("isbn-22 v0.01".rjust(80))
+                    print("--------------------".rjust(80))
+                    print(Style.RESET_ALL)
+                    print(Fore.YELLOW + "Please use double backslashes (\\\) when "
+                    "defining file path") 
+                    print(Style.RESET_ALL)
+                    DATAFILE=input("Please Enter your datafile name including path: ")
+                if submenuOption == '10':
+                    print('')
+                    print(Fore.YELLOW + DATAFILE) 
+                    print(Style.RESET_ALL)
+                    print('')
+                    wait = input("Press ENTER to return")
+                elif submenuOption == '0':
+                    goAgain2 = 0
+
+
+        # elif statement to return to rewrite pickle file and return to previous
+        # menu
+        # ----------------------------------------------------------------------
+        elif menuOption == '0':
+            value = str(FNAME)
+            vvfile = (USER+","+XWORD+","+HOST+","+DATABASE+","+DATAFILE)
+            vfile = open(FNAME, "w")
+            n = vfile.write(vvfile)
+            vfile.close()
+            filename = "dump"
+            file = open(filename, 'wb')
+            pickle.dump(value, file)
+            file.close()
+            goAgain = 0
+
+        
+    
+
+def programFunctMenu():
+    """
+    ============================================================================
+    Function:       programFunctMenu()
+    Purpose:        provides user options for performing program functions
+    Parameter(s):   -None- 
+    Return:         users desired action
+    ============================================================================
+    """
+
+    os.system('cls')
+
+    now = datetime.datetime.now()
+    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+    print("isbn-22 v0.01".rjust(80))
+    print("--------------------".rjust(80))
+    print(Style.RESET_ALL)
+
+    goAgain = 1
+
+    while goAgain == 1:
+        print('')
+        print(Fore.GREEN + 'PROGRAM FUNCTIONS')
+        print(Fore.GREEN + '-------------------')
+        print(Style.RESET_ALL)
+        print('1\tSearch for a Record')
+        print('2\tEdit a Record')
+        print('3\tManually Add a Record')
+        print('')
+        print('')
+        print('4\tImport Records (with genre)')
+        print('5\tImport Records (without genre)')
+        print('')
+        print('')
+        print('5\tImport Genre')
+        print('')
+        print('')
+        print('')
+        print(Fore.RED + '0\tRETURN')
+        print(Style.RESET_ALL)
+        print('')
+        print('')    
+
+        menuOption = input("selection: ")
+
+        if menuOption == '0':
+            goAgain = 0 
+
+def reportsMenu():
+    """
+    ============================================================================
+    Function:       reportsMenu()
+    Purpose:        provides user options for accessing reports
+    Parameter(s):   -None- 
+    Return:         users desired action
+    ============================================================================
+    """
+    os.system('cls')
+
+    now = datetime.datetime.now()
+    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+    print("isbn-22 v0.01".rjust(80))
+    print("--------------------".rjust(80))
+    print(Style.RESET_ALL)
+
+    goAgain = 1
+
+    while goAgain == 1:
+        print('')
+        print(Fore.GREEN + 'REPORTS')
+        print(Fore.GREEN + '-------------------')
+        print(Style.RESET_ALL)
+        print('1\t')
+        print('2\t')
+        print('3\t')
+        print('')
+        print('')
+        print('')
+        print(Fore.RED + '0\tRETURN')
+        print(Style.RESET_ALL)
+        print('')
+        print('')    
+
+        menuOption = input("selection: ")
+
+        if menuOption == '0':
+            goAgain = 0   
 
 
 # ==============================================================================
@@ -286,13 +707,15 @@ def main():
     Return:         -None-
     ============================================================================
     """
-    preProcess()
-    createLists()
-    getInfo()
-    exportBad()
+    global CONNECTION
+    #preProcess()
+    #createLists()
+    #getInfo()
+    #exportBad()
     #getGenre()
+    menu()
     print("Closing Database Connection . . .")
-    connection.close()
+    CONNECTION.close()
     print("bye . . .")
 
 if __name__ == "__main__":
