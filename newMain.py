@@ -36,6 +36,15 @@ Lists:
                                  removed from the isbn_list) 
 
         * these lists are written to text files in the log directory 
+
+******************************************************************************** 
+   TO PROPERLY START THE PROGRAM, YOU MUST PROVIDE A COMMAND LINE ARGUMENT 
+   SPECIFYING THE LOCATION AND NAME OF THE FILE CONTAINING YOUR CREDENTIALS
+   FOR EXAMPLE:
+      python newMain.py C:\\Users\\user1\\Documents\\isbn_info
+      * only use single backslashes (\) in the path
+********************************************************************************
+
 ================================================================================
 """
 
@@ -517,56 +526,124 @@ def sysParmMenu():
                     print("isbn-22 v0.01".rjust(80))
                     print("--------------------".rjust(80))
                     print(Style.RESET_ALL)
-                    USER = input("Please Enter your MySQL username: ")
-                if submenuOption == '2':
+                    print("Current MySQL username is: " + USER)
+                    tempUser = input("Please Enter your new MySQL username: ")
+                    print('')
+                    print(Fore.YELLOW + 
+                        "You are about to reset to MySQL user name to " + tempUser
+                         + " are you sure?") 
+                    print(Style.RESET_ALL)
+                    print('')
+                    resetUser = input("Type YES to make change: ")
+                    if resetUser == 'YES':
+                        USER = tempUser
+                        print('MySQL username changed')
+                        print('')
+                        wait = input("Press ENTER to return")     
+                    else:
+                        print('MySQL username not changed')
+                        print('')
+                        wait = input("Press ENTER to return")                    
+                elif submenuOption == '2':
                     print('')
                     print(Fore.YELLOW + USER) 
                     print(Style.RESET_ALL)
                     print('')
                     wait = input("Press ENTER to return")
-                if submenuOption == '3':
+                elif submenuOption == '3':
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
                     print("isbn-22 v0.01".rjust(80))
                     print("--------------------".rjust(80))
                     print(Style.RESET_ALL)
-                    XWORD = input("Please Enter your MySQL password: ")
-                if submenuOption == '4':
+                    print("Current MySQL password is: " + XWORD)
+                    tempXword = input("Please Enter your new MySQL password: ")
+                    print('')
+                    print(Fore.YELLOW + 
+                        "You are about to reset to MySQL password to " + tempXword
+                         + " are you sure?") 
+                    print(Style.RESET_ALL)
+                    print('')
+                    resetXword = input("Type YES to make change: ")
+                    if resetXword == 'YES':
+                        XWORD = tempXword
+                        print('MySQL password changed')
+                        print('')
+                        wait = input("Press ENTER to return")     
+                    else:
+                        print('MySQL password not changed')
+                        print('')
+                        wait = input("Press ENTER to return")
+                elif submenuOption == '4':
                     print('')
                     print(Fore.YELLOW + XWORD) 
                     print(Style.RESET_ALL)
                     print('')
                     wait = input("Press ENTER to return")
-                if submenuOption == '5':
+                elif submenuOption == '5':
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
                     print("isbn-22 v0.01".rjust(80))
                     print("--------------------".rjust(80))
                     print(Style.RESET_ALL)
-                    HOST = input("Please Enter your MySQL host address: ")
-                if submenuOption == '6':
+                    print("Current MySQL host is: " + HOST)
+                    tempHost = input("Please Enter your new MySQL host: ")
+                    print('')
+                    print(Fore.YELLOW + 
+                        "You are about to reset to MySQL host to " + tempHost
+                         + " are you sure?") 
+                    print(Style.RESET_ALL)
+                    print('')
+                    resetHost = input("Type YES to make change: ")
+                    if resetHost == 'YES':
+                        HOST = tempHost
+                        print('MySQL host changed')
+                        print('')
+                        wait = input("Press ENTER to return")     
+                    else:
+                        print('MySQL host not changed')
+                        print('')
+                        wait = input("Press ENTER to return")
+                elif submenuOption == '6':
                     print('')
                     print(Fore.YELLOW + HOST) 
                     print(Style.RESET_ALL)
                     print('')
                     wait = input("Press ENTER to return")
-                if submenuOption == '7':
+                elif submenuOption == '7':
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
                     print("isbn-22 v0.01".rjust(80))
                     print("--------------------".rjust(80))
                     print(Style.RESET_ALL)
-                    DATABASE = input("Please Enter your MySQL database name: ")
-                if submenuOption == '8':
+                    print("Current MySQL database is: " + DATABASE)
+                    tempDb = input("Please Enter your new MySQL database: ")
+                    print('')
+                    print(Fore.YELLOW + 
+                        "You are about to reset to MySQL database to " + tempDb
+                         + " are you sure?") 
+                    print(Style.RESET_ALL)
+                    print('')
+                    resetDb = input("Type YES to make change: ")
+                    if resetDb == 'YES':
+                        DATABASE = tempDb
+                        print('MySQL database changed')
+                        print('')
+                        wait = input("Press ENTER to return")     
+                    else:
+                        print('MySQL database not changed')
+                        print('')
+                        wait = input("Press ENTER to return")
+                elif submenuOption == '8':
                     print('')
                     print(Fore.YELLOW + DATABASE) 
                     print(Style.RESET_ALL)
                     print('')
                     wait = input("Press ENTER to return")
-                if submenuOption == '9':
+                elif submenuOption == '9':
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
@@ -576,8 +653,25 @@ def sysParmMenu():
                     print(Fore.YELLOW + "Please use double backslashes (\\\) when "
                     "defining file path") 
                     print(Style.RESET_ALL)
-                    DATAFILE=input("Please Enter your datafile name including path: ")
-                if submenuOption == '10':
+                    print("Current MySQL datafile is: " + DATAFILE)
+                    tempDf = input("Please Enter your new MySQL datafile: ")
+                    print('')
+                    print(Fore.YELLOW + 
+                        "You are about to reset to MySQL datafile to " + tempDf
+                         + " are you sure?") 
+                    print(Style.RESET_ALL)
+                    print('')
+                    resetDf = input("Type YES to make change: ")
+                    if resetDf == 'YES':
+                        DATAFILE = tempDf
+                        print('MySQL datafile changed')
+                        print('')
+                        wait = input("Press ENTER to return")     
+                    else:
+                        print('MySQL datafile not changed')
+                        print('')
+                        wait = input("Press ENTER to return")
+                elif submenuOption == '10':
                     print('')
                     print(Fore.YELLOW + DATAFILE) 
                     print(Style.RESET_ALL)
