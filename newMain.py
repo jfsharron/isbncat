@@ -141,7 +141,7 @@ def createLists():
     ============================================================================
     """
     # iterate through data file and for existence in search service
-    print("Checking search service for data file information")
+    print("Checking search service for data file information . . .")
     for i in isbn_list:
         isbn = i
 
@@ -160,7 +160,7 @@ def createLists():
     # data file check completion message
     print("Check for datafile information completed, data with available "
         "information exported to good_list, data without information exported"
-        " to bad_list")
+        " to bad_list . . .")
 
 def getInfo():    
     """
@@ -173,46 +173,39 @@ def getInfo():
     Return:         -None- (exports data to MySQL database)
     ============================================================================
     """
+    global CONNECTION
     # pick search service
-    flag = True
-    while flag == True:
-        print("")
-        print("Please select search service: ")
-        print("1\tGoogle Books")
-        print("2\tWikipedia")
-        print("3\tOpenLibrary")
-        print("")
-        print("Press ENTER to select default (OpenLibrary)")
-        option = input("selection: ") or '3'
-
-        if option == '1':
-            SERVICE = "goob"
-            flag = False
-        elif option == '2':
-            SERVICE = "wiki"
-            flag = False
-        elif option == '3':
-            SERVICE ="openl"
-            flag = False
-        else:
-            print("Please make a valid selection")
-        print("")
-    
-    
-    
+    #flag = True
+    #while flag == True:
+    #    print("")
+    #    print("Please select search service: ")
+    #    print("1\tGoogle Books")
+    #    print("2\tWikipedia")
+    #    print("3\tOpenLibrary")
+    #    print("")
+    #    print("Press ENTER to select default (OpenLibrary)")
+    #    option = input("selection: ") or '3'
+#
+    #    if option == '1':
+    #        SERVICE = "goob"
+    #        flag = False
+    #    elif option == '2':
+    #        SERVICE = "wiki"
+    #        flag = False
+    #    elif option == '3':
+    #        SERVICE ="openl"
+    #        flag = False
+    #    else:
+    #        print("Please make a valid selection")
+    #    print("")
     # iterate through good_list and retrieve data from search service
     print("Connecting to search service . . .")
     print("Retrieving information for good_list . . .")
     for i in good_list:
-
             isbn = i
-
-            #SERVICE = "openl"
-
+            SERVICE = "openl"
             bibtex = bibformatters["bibtex"]
-            
             meta_dict = meta(isbn, service='default')
-
             aut = str(meta_dict['Authors'])
             aut = aut.replace("[","")
             aut = aut.replace("]","")
@@ -241,10 +234,10 @@ def getInfo():
 
 # ==============================================================================
 
-def exportBad():
+def exportLists():
     """
     ============================================================================
-    Function:       exportBad()
+    Function:       exportLists()
     Purpose:        exports bad list (isbn's not found in search service) to 
                     external file for evaluation
     Parameter(s):   -None- (processes data in bad_list)
@@ -328,7 +321,8 @@ def preProcess():
             isbn_list.remove(value)
 
     # completion of duplicate check message
-    print("Duplicate check completed, duplicates removed and exported to dup_list")
+    print("Duplicate check completed, duplicates removed and exported to "
+        "dup_list . . .")
 
 def getGenre():
     """
@@ -342,6 +336,7 @@ def getGenre():
     """    
        
     # create datafrane from external file
+    print('Opening datafile . . .')
     gframe = openpyxl.load_workbook(workbookName)
     data = gframe.active
     
@@ -352,6 +347,8 @@ def getGenre():
     cells = data['A2' : y]
 
     # iterate through external file to retrieve genre values
+    print('Reading datafile values . . .')
+    print('Inserting values into database . . .')
     for c1, c2 in cells:
         gisbn = (c1.value)
         gisbn = str(gisbn)
@@ -680,7 +677,6 @@ def sysParmMenu():
                 elif submenuOption == '0':
                     goAgain2 = 0
 
-
         # elif statement to return to rewrite pickle file and return to previous
         # menu
         # ----------------------------------------------------------------------
@@ -694,10 +690,7 @@ def sysParmMenu():
             file = open(filename, 'wb')
             pickle.dump(value, file)
             file.close()
-            goAgain = 0
-
-        
-    
+            goAgain = 0    
 
 def programFunctMenu():
     """
@@ -708,7 +701,7 @@ def programFunctMenu():
     Return:         users desired action
     ============================================================================
     """
-
+    global CONNECTION
     os.system('cls')
 
     now = datetime.datetime.now()
@@ -719,6 +712,8 @@ def programFunctMenu():
 
     goAgain = 1
 
+    # display main Program Functions menu and select options
+    # -------------------------------------------------------
     while goAgain == 1:
         print('')
         print(Fore.GREEN + 'PROGRAM FUNCTIONS')
@@ -727,13 +722,14 @@ def programFunctMenu():
         print('1\tSearch for a Record')
         print('2\tEdit a Record')
         print('3\tManually Add a Record')
+        print('4\tDelete a Record')
         print('')
         print('')
-        print('4\tImport Records (with genre)')
-        print('5\tImport Records (without genre)')
+        print('5\tImport Records (with genre)')
+        print('6\tImport Records (without genre)')
         print('')
         print('')
-        print('5\tImport Genre')
+        print('7\tImport Genre')
         print('')
         print('')
         print('')
@@ -744,8 +740,406 @@ def programFunctMenu():
 
         menuOption = input("selection: ")
 
-        if menuOption == '0':
-            goAgain = 0 
+        # select program function options
+        # -------------------------------
+        if menuOption == '1':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print('')
+            qisbn = input("Enter ISBN to search for: ")
+            qisbn =str(qisbn)
+            mysql_search_query = ("SELECT * FROM isbn WHERE isbn = " + qisbn)
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)    
+            mytable = from_db_cursor(cursor)
+            print(mytable)
+            print('')
+            wait = input("Press ENTER to return")
+        if menuOption == '2':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print('')
+            qisbn = input("Enter ISBN to edit: ")
+            qisbn =str(qisbn)
+            mysql_search_query = ("SELECT * FROM isbn WHERE isbn = " + qisbn)
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)
+            for row in cursor:
+                eID = str(row[0])
+                print("ID:\t\t" + eID)
+                eIsbn = row[1]
+                print("ISBN:\t\t" + eIsbn)
+                eYear = row[2]
+                print("Year:\t\t" + eYear)
+                ePublisher = row[3]
+                print("Publisher:\t" + ePublisher)
+                eAuthor = row[4]
+                print("Author:\t\t" + eAuthor)
+                eTitle = row[5]
+                print("Title:\t\t" + eTitle)
+                eGenre = row[6]
+                print("Genre:\t\t" + eGenre)
+                print('')
+            # edit isbn options sub menu and options
+            # ---------------------------------------
+            print('1\tEdit ISBN')
+            print('2\tEdit Year')
+            print('3\tEdit Publisher')
+            print('4\tEdit Author')
+            print('5\tEdit Title')
+            print('6\tEdit Genre')
+            print('')
+            print(Fore.RED + '0\tRETURN')
+            print(Style.RESET_ALL)
+            print('')
+            editOption = input("selection: ")
+            if editOption == '1':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current ISBN is: " + eIsbn)
+                tempIsbn = input("Please Enter your new ISBN: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the ISBN to " + tempIsbn
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetIsbn = input("Type YES to make change: ")
+                if resetIsbn == 'YES':
+                    eIsbn = tempIsbn
+                    print('ISBN changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET isbn = " + eIsbn +
+                                        " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")    
+                else:
+                    print('ISBN not changed')
+                    print('')
+                    wait = input("Press ENTER to return")
+            if editOption == '2':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current Year is: " + eYear)
+                tempYear = input("Please Enter your new Year: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the Year to " + tempYear
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetYear = input("Type YES to make change: ")
+                if resetYear == 'YES':
+                    eYEAR = tempYear
+                    print('Year changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET year = " + eYear +
+                                        " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")    
+                else:
+                    print('Year not changed')
+                    print('')
+                    wait = input("Press ENTER to return")
+            if editOption == '3':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current Publisher is: " + ePublisher)
+                tempPublisher = input("Please Enter your new Publisher: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the Publisher to " + tempPublisher
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetPublisher = input("Type YES to make change: ")
+                if resetPublisher == 'YES':
+                    ePublisher = tempPublisher
+                    print('Publisher changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET publisher = " + 
+                                         ePublisher + " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")
+                else:
+                    print('Publisher not changed')
+                    print('')
+                    wait = input("Press ENTER to return")
+            if editOption == '4':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current Author is: " + eAuthor)
+                tempAuthor = input("Please Enter your new Author: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the Author to " + tempAuthor
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetAuthor = input("Type YES to make change: ")
+                if resetAuthor == 'YES':
+                    eAuthor = tempAuthor
+                    print('Author changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET author = " + eAuthor+
+                                        " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")    
+                else:
+                    print('Author not changed')
+                    print('')
+                    wait = input("Press ENTER to return") 
+            if editOption == '5':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current Title is: " + eTitle)
+                tempTitle = input("Please Enter your new Title: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the Title to " + tempTitle
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetTitle= input("Type YES to make change: ")
+                if resetTitle == 'YES':
+                    eTitle= tempTitle
+                    print('Title changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET title = " + eTitle +
+                                        " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")    
+                else:
+                    print('Title not changed')
+                    print('')
+                    wait = input("Press ENTER to return")
+            if editOption == '6':
+                os.system('cls')
+                now = datetime.datetime.now()
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print("isbn-22 v0.01".rjust(80))
+                print("--------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print("Current Genre is: " + eGenre)
+                tempGenre = input("Please Enter your new Genre: ")
+                print('')
+                print(Fore.YELLOW + 
+                    "You are about to change the Genre to " + tempGenre 
+                     + " are you sure?") 
+                print(Style.RESET_ALL)
+                print('')
+                resetGenre  = input("Type YES to make change: ")
+                if resetGenre == 'YES':
+                    eGenre = tempGenre 
+                    print('Genre changed')
+                    print('')
+                    mysql_change_query = ("UPDATE isbn SET genre = " + eGenre +
+                                        " WHERE isbn_id = " + eID)
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(mysql_change_query)
+                    CONNECTION.commit()
+                    wait = input("Press ENTER to return")    
+                else:
+                    print('Genre not changed')
+                    print('')
+                    wait = input("Press ENTER to return")    
+                    # -----------------------------------
+                    # end isbn edit options                             
+        if menuOption == '3':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print('')
+            print('')
+            print(Fore.YELLOW + "Please provide a "
+                    "13 digit ISBN (\x1B[3mrequired\x1B[0m" + Fore.YELLOW + "), "
+                    "published year (\x1B[3moptional\x1B[0m" + Fore.YELLOW + "), "
+                    "publisher (\x1B[3moptional\x1B[0m" + Fore.YELLOW + "), "
+                    "author (\x1B[3moptional\x1B[0m" + Fore.YELLOW + "), "
+                    "title (\x1B[3mrequired\x1B[0m" + Fore.YELLOW + "), "
+                    "and genre (\x1B[3optional\x1B[0m" + Fore.YELLOW + ")")
+            print('')
+            print("Please enter year in 4-digit format")
+            print(Style.RESET_ALL)
+            print('')
+            print('')
+            aISBN = input("Enter ISBN:\t\t ")
+            aYear = input("Enter Year:\t\t ")
+            aPublisher = input("Enter Publisher:\t ")
+            aAuthor = input("Enter Author(s):\t ")
+            aTitle = input("Enter Title:\t\t ")
+            aGenre = input("Enter Genre:\t\t ")
+            print('')
+            data = (aISBN, aYear, aPublisher, aAuthor, aTitle)
+            mySql_insert_query = (
+            "INSERT INTO isbn (isbn, year, publisher, author, title)"
+            "VALUES (%s, %s, %s, %s, %s)"
+            )
+            cursor = CONNECTION.cursor()
+            cursor.execute(mySql_insert_query, data)
+            CONNECTION.commit()
+            print(Fore.YELLOW + "Record added")
+            print(Style.RESET_ALL)
+            print('')
+            mysql_search_query = ("SELECT * FROM isbn WHERE isbn = " + aISBN)
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)    
+            mytable = from_db_cursor(cursor)
+            print(mytable)
+            print('')
+            wait = input("Press ENTER to return")
+        if menuOption == '4':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print('')
+            print('')
+            dIsbn = input('Enter isbn to delete: ')
+            print(dIsbn)
+            print('')
+            mysql_search_query = ("SELECT * FROM isbn WHERE isbn = " + dIsbn)
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)    
+            mytable = from_db_cursor(cursor)
+            print(mytable)
+            print('')
+            print(Fore.YELLOW + 
+                   "You are about to delete the ISBN " + dIsbn
+                    + " are you sure?") 
+            print(Style.RESET_ALL)
+            print('')
+            deleteIsbn = input("Type YES to make change: ")
+            if deleteIsbn == 'YES':
+                print('ISBN deleted')
+                print('')
+                mysql_delete_query = ("DELETE FROM isbn WHERE isbn = " + dIsbn)
+                cursor = CONNECTION.cursor()
+                cursor.execute(mysql_delete_query)
+                CONNECTION.commit()
+                wait = input("Press ENTER to return")    
+            else:
+                print('ISBN not deleted')
+                print('')
+                wait = input("Press ENTER to return")
+        if menuOption == '5':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print(Fore.YELLOW + "You are about to import records (including genre)"
+                "into your MySQL database")
+            print('')
+            print(Style.RESET_ALL)
+            import2 = input("Type YES to proceed: ")
+            if import2 == 'YES':
+                print('')
+                print('import being processed . . .')
+                print('')
+                preProcess()
+                createLists()
+                getInfo()
+                getGenre()   
+                exportLists()
+                wait = input("Press ENTER to return")    
+            else:
+                print('import not processed')
+                print('')
+                wait = input("Press ENTER to return")
+        if menuOption == '6':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print(Fore.YELLOW + "You are about to import records (without genre)"
+                "into your MySQL database")
+            print('')
+            print(Style.RESET_ALL)
+            import2 = input("Type YES to proceed: ")
+            if import2 == 'YES':
+                print('')
+                print('import being processed . . .')
+                print('')
+                preProcess()
+                createLists()
+                getInfo()  
+                exportLists()
+                wait = input("Press ENTER to return")    
+            else:
+                print('import not processed')
+                print('')
+                wait = input("Press ENTER to return")  
+        if menuOption == '7':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print("isbn-22 v0.01".rjust(80))
+            print("--------------------".rjust(80))
+            print(Style.RESET_ALL)
+            print(Fore.YELLOW + "You are about to import genre values into your "
+                "MySQL database")
+            print('')
+            print(Style.RESET_ALL)
+            import3 = input("Type YES to proceed: ")
+            if import3 == 'YES':
+                print('')
+                print('import being processed . . .')
+                print('')
+                getGenre()
+                wait = input("Press ENTER to return")    
+            else:
+                print('import not processed')
+                print('')
+                wait = input("Press ENTER to return")
+        elif menuOption == '0':
+            goAgain = 0
 
 def reportsMenu():
     """
@@ -787,7 +1181,6 @@ def reportsMenu():
         if menuOption == '0':
             goAgain = 0   
 
-
 # ==============================================================================
 #  main entry point for program
 #  =============================================================================    
@@ -805,8 +1198,8 @@ def main():
     #preProcess()
     #createLists()
     #getInfo()
-    #exportBad()
     #getGenre()
+    #exportLists()
     menu()
     print("Closing Database Connection . . .")
     CONNECTION.close()
