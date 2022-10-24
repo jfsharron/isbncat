@@ -88,6 +88,7 @@ HOST        = str(lines[2])
 DATABASE    = str(lines[3])
 DATAFILE    = str(lines[4])
 FNAME       = str(sys.argv[1])
+SERVICE     = "openl"
 
 
 # define external files
@@ -174,36 +175,13 @@ def getInfo():
     ============================================================================
     """
     global CONNECTION
-    # pick search service
-    #flag = True
-    #while flag == True:
-    #    print("")
-    #    print("Please select search service: ")
-    #    print("1\tGoogle Books")
-    #    print("2\tWikipedia")
-    #    print("3\tOpenLibrary")
-    #    print("")
-    #    print("Press ENTER to select default (OpenLibrary)")
-    #    option = input("selection: ") or '3'
-#
-    #    if option == '1':
-    #        SERVICE = "goob"
-    #        flag = False
-    #    elif option == '2':
-    #        SERVICE = "wiki"
-    #        flag = False
-    #    elif option == '3':
-    #        SERVICE ="openl"
-    #        flag = False
-    #    else:
-    #        print("Please make a valid selection")
-    #    print("")
-    # iterate through good_list and retrieve data from search service
+    global SERVICE
+
     print("Connecting to search service . . .")
     print("Retrieving information for good_list . . .")
     for i in good_list:
             isbn = i
-            SERVICE = "openl"
+            #SERVICE = "openl"
             bibtex = bibformatters["bibtex"]
             meta_dict = meta(isbn, service='default')
             aut = str(meta_dict['Authors'])
@@ -238,17 +216,47 @@ def exportLists():
     """
     ============================================================================
     Function:       exportLists()
-    Purpose:        exports bad list (isbn's not found in search service) to 
-                    external file for evaluation
-    Parameter(s):   -None- (processes data in bad_list)
-    Return:         -None- (generates external file)    
+    Purpose:        exports lists external log files then clears them
+    Parameter(s):   -None- (processes from lists)
+    Return:         -None- (generates external log files)    
     ============================================================================
     """
-    with open(r'bad_list.txt', 'w') as fp:
+    # create datetime string for log entries
+    # ---------------------------------------
+    dt = datetime.datetime.now()
+    dt = str(dt)
+
+    # write lists to log files
+    # ------------------------
+    with open('log/bad_list', 'a') as fp1:
         for i in bad_list:
-            fp.write("%s\n" % i)
-    
-    fp.close()
+            fp1.write(dt + "\t\t + %s\n" % i)    
+    fp1.close()
+    bad_list.clear()
+
+    with open('log/good_list', 'a') as fp2:
+        for i in good_list:
+            fp2.write(dt + "\t\t + %s\n" % i)    
+    fp2.close()
+    good_list.clear()
+
+    with open('log/isbn_list', 'a') as fp3:
+        for i in isbn_list:
+            fp3.write(dt + "\t\t + %s\n" % i)    
+    fp3.close()
+    isbn_list.clear()
+
+    with open('log/dbIsbn_list', 'a') as fp4:
+        for i in dbIsbn_list:
+            fp4.write(dt + "\t\t + %s\n" % i)    
+    fp4.close()
+    dbIsbn_list.clear()
+
+    with open('log/dup_list', 'a') as fp5:
+        for i in dup_list:
+            fp5.write(dt + "\t\t + %s\n" % i)    
+    fp5.close()
+    dup_list.clear()
 
 def preProcess():
     """
@@ -374,20 +382,18 @@ def menu():
     ============================================================================
     """
     os.system('cls')
-
-    # format screen
-    # --------------
-    now = datetime.datetime.now()
-    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-    print("isbn-22 v0.01".rjust(80))
-    print("--------------------".rjust(80))
-    print(Style.RESET_ALL)
-
     # main menu
     #----------
     goAgain = 1
 
     while goAgain == 1:
+        # format screen
+        # --------------
+        now = datetime.datetime.now()
+        print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+        print("isbn-22 v0.01".rjust(80))
+        print("--------------------".rjust(80))
+        print(Style.RESET_ALL)
         print('')
         print(Fore.GREEN + 'MAIN MENU')
         print(Fore.GREEN + '-------------------')
@@ -676,7 +682,6 @@ def sysParmMenu():
                     wait = input("Press ENTER to return")
                 elif submenuOption == '0':
                     goAgain2 = 0
-
         # elif statement to return to rewrite pickle file and return to previous
         # menu
         # ----------------------------------------------------------------------
@@ -1081,6 +1086,7 @@ def programFunctMenu():
                 print('')
                 print('import being processed . . .')
                 print('')
+                searchService()
                 preProcess()
                 createLists()
                 getInfo()
@@ -1107,6 +1113,7 @@ def programFunctMenu():
                 print('')
                 print('import being processed . . .')
                 print('')
+                searchService()
                 preProcess()
                 createLists()
                 getInfo()  
@@ -1133,6 +1140,7 @@ def programFunctMenu():
                 print('import being processed . . .')
                 print('')
                 getGenre()
+                exportLists()
                 wait = input("Press ENTER to return")    
             else:
                 print('import not processed')
@@ -1180,6 +1188,34 @@ def reportsMenu():
 
         if menuOption == '0':
             goAgain = 0   
+
+def searchService():
+    """
+    ============================================================================
+    Function:       searchService()
+    Purpose:        defines the online service to use for isbn data
+    Parameter(s):   -None- 
+    Return:         -None- (value written to variable)
+    ============================================================================
+    """
+    global SERVICE
+
+    print('Search Service Options:')
+    print('------------------------')
+    print('1\tGoogle Books (goob)')
+    print('2\tWikipedia (wiki)')
+    print('3\tOpenLibrary (openl)') 
+    print('')
+    print('')
+    service = input("Select Service: ")
+    if service == '1':
+        SERVICE = "goob"
+    elif service == '2':
+        SERVICE = "wiki"
+    elif service == '3':
+        SERVICE = "openl"
+    print(Fore.YELLOW + "Service Set To: " + SERVICE)
+    print(Style.RESET_ALL)
 
 # ==============================================================================
 #  main entry point for program
