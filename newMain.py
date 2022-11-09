@@ -64,6 +64,7 @@ from numpy import loadtxt
 from prettytable import from_db_cursor
 from prettytable import PrettyTable
 import datetime
+from datetime import date
 import os
 from termcolor import colored, cprint 
 from colorama import Fore, Back, Style 
@@ -73,6 +74,13 @@ import fpdf
 import colorama
 from colorama import Fore, Back, Style
 import getopt
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.lib.units import inch
+import webbrowser
+import time
+from pretty_html_table import build_table
+from sqlalchemy import create_engine
 
 # retrieve stored information
 # ===========================
@@ -89,6 +97,9 @@ DATABASE    = str(lines[3])
 DATAFILE    = str(lines[4])
 FNAME       = str(sys.argv[1])
 SERVICE     = "openl"
+VERNO       = "1.0.0"
+VERNA       = "Trinidad"
+
 
 
 # define external files
@@ -208,9 +219,6 @@ def getInfo():
 
     # completion message
     print("Available information added to SQL database")            
-            
-
-# ==============================================================================
 
 def exportLists():
     """
@@ -391,8 +399,8 @@ def menu():
         # --------------
         now = datetime.datetime.now()
         print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-        print("isbn-22 v0.01".rjust(80))
-        print("--------------------".rjust(80))
+        print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+        print("-----------------------".rjust(80))
         print(Style.RESET_ALL)
         print('')
         print(Fore.GREEN + 'MAIN MENU')
@@ -450,8 +458,8 @@ def sysParmMenu():
         os.system('cls')
         now = datetime.datetime.now()
         print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-        print("isbn-22 v0.01".rjust(80))
-        print("--------------------".rjust(80))
+        print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+        print("-----------------------".rjust(80))
         print(Style.RESET_ALL)
         print('')
         print(Fore.GREEN + 'SET SYSTEM PARAMETERS')
@@ -488,8 +496,8 @@ def sysParmMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print('')
                 print(Fore.GREEN + 'VALUES FILE')
@@ -526,8 +534,8 @@ def sysParmMenu():
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                    print("isbn-22 v0.01".rjust(80))
-                    print("--------------------".rjust(80))
+                    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                    print("-----------------------".rjust(80))
                     print(Style.RESET_ALL)
                     print("Current MySQL username is: " + USER)
                     tempUser = input("Please Enter your new MySQL username: ")
@@ -557,8 +565,8 @@ def sysParmMenu():
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                    print("isbn-22 v0.01".rjust(80))
-                    print("--------------------".rjust(80))
+                    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                    print("-----------------------".rjust(80))
                     print(Style.RESET_ALL)
                     print("Current MySQL password is: " + XWORD)
                     tempXword = input("Please Enter your new MySQL password: ")
@@ -588,8 +596,8 @@ def sysParmMenu():
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                    print("isbn-22 v0.01".rjust(80))
-                    print("--------------------".rjust(80))
+                    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                    print("-----------------------".rjust(80))
                     print(Style.RESET_ALL)
                     print("Current MySQL host is: " + HOST)
                     tempHost = input("Please Enter your new MySQL host: ")
@@ -619,8 +627,8 @@ def sysParmMenu():
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                    print("isbn-22 v0.01".rjust(80))
-                    print("--------------------".rjust(80))
+                    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                    print("-----------------------".rjust(80))
                     print(Style.RESET_ALL)
                     print("Current MySQL database is: " + DATABASE)
                     tempDb = input("Please Enter your new MySQL database: ")
@@ -650,8 +658,8 @@ def sysParmMenu():
                     os.system('cls')
                     now = datetime.datetime.now()
                     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                    print("isbn-22 v0.01".rjust(80))
-                    print("--------------------".rjust(80))
+                    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                    print("-----------------------".rjust(80))
                     print(Style.RESET_ALL)
                     print(Fore.YELLOW + "Please use double backslashes (\\\) when "
                     "defining file path") 
@@ -711,8 +719,8 @@ def programFunctMenu():
 
     now = datetime.datetime.now()
     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-    print("isbn-22 v0.01".rjust(80))
-    print("--------------------".rjust(80))
+    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+    print("-----------------------".rjust(80))
     print(Style.RESET_ALL)
 
     goAgain = 1
@@ -751,8 +759,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print('')
             qisbn = input("Enter ISBN to search for: ")
@@ -768,8 +776,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print('')
             qisbn = input("Enter ISBN to edit: ")
@@ -810,8 +818,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current ISBN is: " + eIsbn)
                 tempIsbn = input("Please Enter your new ISBN: ")
@@ -840,8 +848,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current Year is: " + eYear)
                 tempYear = input("Please Enter your new Year: ")
@@ -870,8 +878,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current Publisher is: " + ePublisher)
                 tempPublisher = input("Please Enter your new Publisher: ")
@@ -900,8 +908,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current Author is: " + eAuthor)
                 tempAuthor = input("Please Enter your new Author: ")
@@ -930,8 +938,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current Title is: " + eTitle)
                 tempTitle = input("Please Enter your new Title: ")
@@ -960,8 +968,8 @@ def programFunctMenu():
                 os.system('cls')
                 now = datetime.datetime.now()
                 print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print("isbn-22 v0.01".rjust(80))
-                print("--------------------".rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
                 print(Style.RESET_ALL)
                 print("Current Genre is: " + eGenre)
                 tempGenre = input("Please Enter your new Genre: ")
@@ -992,8 +1000,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print('')
             print('')
@@ -1038,8 +1046,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print('')
             print('')
@@ -1074,8 +1082,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print(Fore.YELLOW + "You are about to import records (including genre)"
                 "into your MySQL database")
@@ -1101,8 +1109,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print(Fore.YELLOW + "You are about to import records (without genre)"
                 "into your MySQL database")
@@ -1127,8 +1135,8 @@ def programFunctMenu():
             os.system('cls')
             now = datetime.datetime.now()
             print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-            print("isbn-22 v0.01".rjust(80))
-            print("--------------------".rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
             print(Fore.YELLOW + "You are about to import genre values into your "
                 "MySQL database")
@@ -1162,20 +1170,21 @@ def reportsMenu():
 
     now = datetime.datetime.now()
     print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-    print("isbn-22 v0.01".rjust(80))
-    print("--------------------".rjust(80))
+    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+    print("-----------------------".rjust(80))
     print(Style.RESET_ALL)
 
     goAgain = 1
 
+    # reports menu and options
+    # ------------------------
     while goAgain == 1:
         print('')
         print(Fore.GREEN + 'REPORTS')
         print(Fore.GREEN + '-------------------')
         print(Style.RESET_ALL)
-        print('1\t')
-        print('2\t')
-        print('3\t')
+        print('1\tShow All Records')
+        print('2\tShow Filtered Records')
         print('')
         print('')
         print('')
@@ -1186,7 +1195,264 @@ def reportsMenu():
 
         menuOption = input("selection: ")
 
-        if menuOption == '0':
+        # all records report
+        # -------------------
+        if menuOption == '1':
+            print(Fore.GREEN + 'All Records')
+            print(Fore.GREEN + '-------------------')
+            print(Style.RESET_ALL)
+            print('')
+            mysql_search_query = ("SELECT * FROM isbn")
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)    
+            mytable = from_db_cursor(cursor)
+            print(mytable)
+            print('')
+            # send report to browser
+            # -----------------------
+            printRep = input(Fore.YELLOW + 'To send this report to the browser '
+                            'for printing or saving enter b or B, otherwise press '
+                            'enter to return: ')
+            print(Style.RESET_ALL)
+            if printRep == "b" or printRep == "B":
+                # generate data for report
+                # ------------------------
+                mysql_search_query = ("SELECT * FROM isbn")
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)
+                mytable = pd.read_sql("select * from isbn", CONNECTION)
+                pd.set_option('display.expand_frame_repr', False)
+                mytable2 = build_table(mytable,
+                                     'grey_light',
+                                     font_size = 'small',
+                                     font_family = 'Open Sans, courier',
+                                     text_align = 'left ')
+                # generate html content
+                # ---------------------
+                html_content = f"<html> \
+                                <head> <h2> Unfiltered Report - All Records\
+                                </h2> \
+                                <h3> <script>\
+                                var timestamp = Date.now();\
+                                var d = new Date(timestamp);\
+                                document.write(d);\
+                                </script>\
+                                </h3>\
+                                </head> \
+                                <body> {mytable2} \
+                                </body> \
+                                </html>"
+                with open("report/all_no_filter.html", "w") as html_file:
+                    html_file.write(html_content)
+                    print("Created")
+                time.sleep(2)
+                # display in browser
+                # ------------------
+                webbrowser.open_new_tab("report\\all_no_filter.html")
+                print('')
+                wait = input("Press ENTER to return")
+
+        # filtered records report
+        # -----------------------
+        if menuOption == '2':
+            print(Fore.GREEN + 'Filtered Records')
+            print(Fore.GREEN + '-------------------')
+            print(Style.RESET_ALL)
+            print('')
+            print('Select Filter:')
+            print('')
+            print('1\tISBN')
+            print('2\tyear')
+            print('3\tpublisher')
+            print('4\tauthor')
+            print('5\ttitle')
+            print('6\tgenre')
+            print('')
+            print('7\tcreate a custom filter')
+            print('')
+            filt = input("select filter: ")
+            if filt == '1':
+                fil = "isbn"
+            if filt == '2':
+                fil = "year"
+            if filt == '3':
+                fil = "publisher"
+            if filt == '4':
+                fil = "author"
+            if filt == '15':
+                fil = "title"
+            if filt == '6':
+                fil = "genre"
+            if filt == '7':
+                fil = "custom"
+            # create custom query for report data
+            # ------------------------------------
+            if fil == "custom":
+                os.system('cls')
+                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+                print("-----------------------".rjust(80))
+                print(Style.RESET_ALL)
+                print('On this screen you can enter your own SQL WHERE statement\n'
+                    'to be used in the query. Please be aware that this staement\n'
+                    'must be entered correctly, following proper SQL syntax')
+                print('')
+                # define custom query
+                # -------------------
+                customQuery = input("Please enter your WHERE clause here,"
+                                    " starting with WHERE:  ")
+                mysql_search_query = ("SELECT * FROM isbn " + customQuery)
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)    
+                mytable = from_db_cursor(cursor)
+                print('')
+                print(mytable)
+                print('')
+                printRep = input(Fore.YELLOW + 'To send this report to the '
+                                'browser for printing or saving enter b or B, '
+                                'otherwise press enter to return: ')
+                print(Style.RESET_ALL)
+                # send report to browser
+                # -----------------------
+                if printRep == "b" or printRep == "B":
+                    mysql_search_query = ("SELECT * FROM isbn " + customQuery)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_query)
+                    mytable = pd.read_sql("SELECT * FROM isbn " + 
+                                            customQuery, CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    mytable2 = build_table(mytable,
+                                         'grey_light',
+                                         font_size = 'small',
+                                         font_family = 'Open Sans, courier',
+                                         text_align = 'left ')
+                    # generate html content
+                    # ---------------------
+                    html_content = f"<html> \
+                                    <head> <h2>Filtered Report - Filter: \
+                                    {customQuery} \
+                                    </h2> \
+                                    <h3> <script>\
+                                    var timestamp = Date.now();\
+                                    var d = new Date(timestamp);\
+                                    document.write(d);\
+                                    </script>\
+                                    </h3>\
+                                    </head> \
+                                    <body> {mytable2} \
+                                    </body> \
+                                    </html>"
+                    with open("report/all_filtered.html", "w") as html_file:
+                        html_file.write(html_content)
+                        print("Created")
+                    time.sleep(2)
+                    # display in browser
+                    # ------------------
+                    webbrowser.open_new_tab("report\\all_filtered.html")
+                    print('')
+                print("The custom query was " + Fore.RED + customQuery + 
+                        Style.RESET_ALL + " would you like to save this query?")
+                saveQ = input("If you want to save this query, enter y or Y: ")
+                if saveQ == 'y' or saveQ == 'Y':
+                    saveQname = input("Please enter a simple query name: ")
+                    saveQdesc = input("Please enter a brief description of the "
+                                "query: ")
+                    print('')
+                    print("Available types are:")
+                    print("--------------------")
+                    mysql_search_type = ("SELECT * FROM cqType")
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_type)
+                    mytable = pd.read_sql("select * from cqType", CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    print(mytable)
+                    print('')
+                    saveQtype = input("Please enter a query type: ")
+                    #saveQuser = input("User: ")
+                    today = date.today()
+                    data = (saveQname, saveQdesc, saveQtype, mysql_search_query,\
+                            USER, today)
+                    cq_insert_query = (
+                    "INSERT INTO cQuery (cq_name, cq_desc, cq_type, cq_query,\
+                                        cq_creator, cq_created)"
+                    "VALUES (%s, %s, %s, %s, %s, %s)"
+                    )
+                    cursor = CONNECTION.cursor()
+                    cursor.execute(cq_insert_query, data)
+                    CONNECTION.commit()
+                    print('')
+                    print(Fore.YELLOW + "cQuery "+ saveQname + " created")
+                    print(Style.RESET_ALL)
+                    
+
+
+
+
+
+
+
+
+            else:
+                # get data for report
+                # -------------------
+                filterValue = input("select value to filter by: ")
+                mysql_search_query = ("SELECT * FROM isbn WHERE " + fil + " = " + 
+                                    filterValue)
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)    
+                mytable = from_db_cursor(cursor)
+                print('')
+                # display report
+                # --------------
+                print(mytable)
+                print('')
+                printRep = input(Fore.YELLOW + 'To send this report to the browser '
+                                'for printing or saving enter b or B, otherwise '
+                                'press enter to return: ')
+                print(Style.RESET_ALL)
+                # send report to browser
+                # -----------------------
+                if printRep == "b" or printRep == "B":
+                    mysql_search_query = ("SELECT * FROM isbn WHERE " + fil + 
+                                        " = " + filterValue)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_query)
+                    mytable = pd.read_sql("SELECT * FROM isbn WHERE " + fil + 
+                                        " = " + filterValue, CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    mytable2 = build_table(mytable,
+                                         'grey_light',
+                                         font_size = 'small',
+                                         font_family = 'Open Sans, courier',
+                                         text_align = 'left ')
+                    # generate html content
+                    # ---------------------
+                    html_content = f"<html> \
+                                    <head> <h2>Filtered Report - Filter: \
+                                    {mysql_search_query} \
+                                    </h2> \
+                                    <h3> <script>\
+                                    var timestamp = Date.now();\
+                                    var d = new Date(timestamp);\
+                                    document.write(d);\
+                                    </script>\
+                                    </h3>\
+                                    </head> \
+                                    <body> {mytable2} \
+                                    </body> \
+                                    </html>"
+                    with open("report/all_filtered.html", "w") as html_file:
+                        html_file.write(html_content)
+                        print("Created")
+                    time.sleep(2)
+                    # display in browser
+                    # ------------------
+                    webbrowser.open_new_tab("report\\all_filtered.html")
+                    print('')
+                    wait = input("Press ENTER to return")
+            wait = input("Press ENTER to return")
+
+        elif menuOption == '0':
             goAgain = 0   
 
 def searchService():

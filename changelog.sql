@@ -1,0 +1,46 @@
+--liquibase formatted sql
+
+--changeset jfs:1
+CREATE DATABASE IF NOT EXISTS `isbn22` DEFAULT CHARACTER SET latin1 
+COLLATE latin1_swedish_ci;
+USE `isbn22`;
+
+CREATE TABLE IF NOT EXISTS `isbn22`.`isbn` (
+  `isbn_id` INT NOT NULL AUTO_INCREMENT,
+  `isbn` CHAR(13) NOT NULL,
+  `year` VARCHAR(4) NULL DEFAULT NULL,
+  `publisher` VARCHAR(50) NULL DEFAULT NULL,
+  `author` VARCHAR(250) NULL DEFAULT NULL,
+  `title` VARCHAR(500) NOT NULL,
+  `genre` VARCHAR(50) NULL DEFAULT NULL,
+  PRIMARY KEY (`isbn_id`),
+  UNIQUE INDEX `isbn` (`isbn` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 3022
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `isbn22`.`cQuery` (
+  `cq_id` INT NOT NULL AUTO_INCREMENT,
+  `cq_name` VARCHAR(100) NOT NULL,
+  `cq_desc` TEXT NOT NULL,
+  `cq_type` VARCHAR(100) NOT NULL,
+  `cq_query` VARCHAR(500) NOT NULL,
+  `cq_creator` VARCHAR(100) NOT NULL,
+  `cq_created` DATE NOT NULL,
+  PRIMARY KEY (`cq_id`),
+  UNIQUE INDEX `cq_name_value_UNIQUE` (`cq_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 2028
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+CREATE TABLE IF NOT EXISTS `isbn22`.`cqType` (
+  `cqType_id` INT NOT NULL AUTO_INCREMENT,
+  `cqType_name` VARCHAR(100) NOT NULL,
+  `cqType_desc` TEXT NOT NULL,
+  PRIMARY KEY (`cqType_id`),
+  UNIQUE INDEX `cqType_name_value_UNIQUE` (`cqType_name` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8mb3;
