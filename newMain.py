@@ -69,7 +69,7 @@ import os
 from termcolor import colored, cprint 
 from colorama import Fore, Back, Style 
 from tabulate import tabulate
-from win32printing import Printer
+#from win32printing import Printer
 import fpdf
 import colorama
 from colorama import Fore, Back, Style
@@ -426,7 +426,7 @@ def menu():
         elif menuOption == '2':
             programFunctMenu()
         elif menuOption == '3':
-            reportsMenu() 
+            newReport() 
         elif menuOption == '0':    
             goAgain = 0 
 
@@ -769,6 +769,7 @@ def programFunctMenu():
             cursor = CONNECTION.cursor(buffered = True)
             cursor.execute(mysql_search_query)    
             mytable = from_db_cursor(cursor)
+            mytable.align = "l"
             print(mytable)
             print('')
             wait = input("Press ENTER to return")
@@ -1036,9 +1037,9 @@ def programFunctMenu():
             print(Style.RESET_ALL)
             print('')
             mysql_search_query = ("SELECT * FROM isbn WHERE isbn = " + aISBN)
-            cursor = CONNECTION.cursor(buffered = True)
             cursor.execute(mysql_search_query)    
             mytable = from_db_cursor(cursor)
+            mytable.align = "l"
             print(mytable)
             print('')
             wait = input("Press ENTER to return")
@@ -1058,6 +1059,7 @@ def programFunctMenu():
             cursor = CONNECTION.cursor(buffered = True)
             cursor.execute(mysql_search_query)    
             mytable = from_db_cursor(cursor)
+            mytable.align = "l"
             print(mytable)
             print('')
             print(Fore.YELLOW + 
@@ -1157,15 +1159,15 @@ def programFunctMenu():
         elif menuOption == '0':
             goAgain = 0
 
-def reportsMenu():
+def newReport():
     """
     ============================================================================
-    Function:       reportsMenu()
-    Purpose:        provides user options for accessing reports
+    Function:       newReport()
+    Purpose:        provides user options for accessing reports (v2)
     Parameter(s):   -None- 
     Return:         users desired action
     ============================================================================
-    """
+    """     
     os.system('cls')
 
     now = datetime.datetime.now()
@@ -1183,10 +1185,11 @@ def reportsMenu():
         print(Fore.GREEN + 'REPORTS')
         print(Fore.GREEN + '-------------------')
         print(Style.RESET_ALL)
-        print('1\tShow All Records')
-        print('2\tShow Filtered Records')
+        print('1\tShow Report Index')
+        print('2\tFilter Report Index')
+        print('3\tShow Report By Name')        
         print('')
-        print('')
+        print('4\tCreate New Report')
         print('')
         print(Fore.RED + '0\tRETURN')
         print(Style.RESET_ALL)
@@ -1195,17 +1198,25 @@ def reportsMenu():
 
         menuOption = input("selection: ")
 
-        # all records report
+        # show report index
         # -------------------
         if menuOption == '1':
-            print(Fore.GREEN + 'All Records')
+            print(Fore.GREEN + 'Report Index')
             print(Fore.GREEN + '-------------------')
             print(Style.RESET_ALL)
-            print('')
-            mysql_search_query = ("SELECT * FROM isbn")
+            print('')     
+            mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                    cq_desc AS \"report description\", \
+                                    cqType_name AS \"report type\", \
+                                    cq_parameters AS \"parameters(0=no, 1=yes)\",\
+                                    cq_creator AS \"report orginator\", \
+                                    cq_created AS \"origination date\" \
+                                    FROM cQuery p INNER JOIN cqType c \
+                                    ON p.cq_type = c.cqType_value")
             cursor = CONNECTION.cursor(buffered = True)
             cursor.execute(mysql_search_query)    
             mytable = from_db_cursor(cursor)
+            mytable.align = "l"
             print(mytable)
             print('')
             # send report to browser
@@ -1217,10 +1228,24 @@ def reportsMenu():
             if printRep == "b" or printRep == "B":
                 # generate data for report
                 # ------------------------
-                mysql_search_query = ("SELECT * FROM isbn")
+                mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                    cq_desc AS \"report description\", \
+                                    cqType_name AS \"report type\", \
+                                    cq_parameters AS \"parameters(0=no, 1=yes)\",\
+                                    cq_creator AS \"report orginator\", \
+                                    cq_created AS \"origination date\" \
+                                    FROM cQuery p INNER JOIN cqType c \
+                                    ON p.cq_type = c.cqType_value")
                 cursor = CONNECTION.cursor(buffered = True)
                 cursor.execute(mysql_search_query)
-                mytable = pd.read_sql("select * from isbn", CONNECTION)
+                mytable = pd.read_sql("SELECT cq_name AS \"report name\", \
+                                    cq_desc AS \"report description\", \
+                                    cqType_name AS \"report type\", \
+                                    cq_parameters AS \"parameters(0=no, 1=yes)\",\
+                                    cq_creator AS \"report orginator\", \
+                                    cq_created AS \"origination date\" \
+                                    FROM cQuery p INNER JOIN cqType c \
+                                    ON p.cq_type = c.cqType_value", CONNECTION)
                 pd.set_option('display.expand_frame_repr', False)
                 mytable2 = build_table(mytable,
                                      'grey_light',
@@ -1230,7 +1255,7 @@ def reportsMenu():
                 # generate html content
                 # ---------------------
                 html_content = f"<html> \
-                                <head> <h2> Unfiltered Report - All Records\
+                                <head> <h2> ISBN22 Report Index - All Records\
                                 </h2> \
                                 <h3> <script>\
                                 var timestamp = Date.now();\
@@ -1242,84 +1267,94 @@ def reportsMenu():
                                 <body> {mytable2} \
                                 </body> \
                                 </html>"
-                with open("report/all_no_filter.html", "w") as html_file:
+                with open("report/report_index.html", "w") as html_file:
                     html_file.write(html_content)
                     print("Created")
                 time.sleep(2)
                 # display in browser
                 # ------------------
-                webbrowser.open_new_tab("report\\all_no_filter.html")
+                webbrowser.open_new_tab("report\\report_index.html")
                 print('')
-                wait = input("Press ENTER to return")
-
-        # filtered records report
-        # -----------------------
-        if menuOption == '2':
-            print(Fore.GREEN + 'Filtered Records')
-            print(Fore.GREEN + '-------------------')
+                wait = input("Press ENTER to return")         
+        # display filtered index
+        # ======================
+        elif menuOption == '2':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
+            print("Available filters are:")
+            print("----------------------")
             print('')
-            print('Select Filter:')
+            mysql_search_query = ("SELECT cqType_value AS 'value', \
+                                cqType_name AS 'name', \
+                                cqType_desc AS 'description' FROM cqType")
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(mysql_search_query)    
+            mytable = from_db_cursor(cursor)
+            mytable.align = "l"
+            print(mytable)
             print('')
-            print('1\tISBN')
-            print('2\tyear')
-            print('3\tpublisher')
-            print('4\tauthor')
-            print('5\ttitle')
-            print('6\tgenre')
-            print('')
-            print('7\tcreate a custom filter')
-            print('')
-            filt = input("select filter: ")
-            if filt == '1':
-                fil = "isbn"
-            if filt == '2':
-                fil = "year"
-            if filt == '3':
-                fil = "publisher"
-            if filt == '4':
-                fil = "author"
-            if filt == '15':
-                fil = "title"
-            if filt == '6':
-                fil = "genre"
-            if filt == '7':
-                fil = "custom"
-            # create custom query for report data
-            # ------------------------------------
-            if fil == "custom":
-                os.system('cls')
-                print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
-                print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
-                print("-----------------------".rjust(80))
+            print('')  
+            filt = input("Please select a filter value to display reports by: ")
+            # filter by type "test"
+            #----------------------
+            if filt == "1":
+                cqn = '"test"'
+                print(Fore.GREEN + 'Filtered Report Index')
+                print(Fore.GREEN + '----------------------')
                 print(Style.RESET_ALL)
-                print('On this screen you can enter your own SQL WHERE statement\n'
-                    'to be used in the query. Please be aware that this staement\n'
-                    'must be entered correctly, following proper SQL syntax')
-                print('')
-                # define custom query
-                # -------------------
-                customQuery = input("Please enter your WHERE clause here,"
-                                    " starting with WHERE:  ")
-                mysql_search_query = ("SELECT * FROM isbn " + customQuery)
+                print('')     
+                mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value\
+                                        WHERE cqType_name = " + cqn)
                 cursor = CONNECTION.cursor(buffered = True)
                 cursor.execute(mysql_search_query)    
                 mytable = from_db_cursor(cursor)
-                print('')
+                mytable.align = "l"
                 print(mytable)
                 print('')
-                printRep = input(Fore.YELLOW + 'To send this report to the '
-                                'browser for printing or saving enter b or B, '
-                                'otherwise press enter to return: ')
-                print(Style.RESET_ALL)
                 # send report to browser
                 # -----------------------
+                printRep = input(Fore.YELLOW + 
+                                'To send this report to the browser for printing'
+                                ' or saving enter b or B, otherwise press '
+                                'enter to return: ')
+                print(Style.RESET_ALL)
                 if printRep == "b" or printRep == "B":
-                    mysql_search_query = ("SELECT * FROM isbn " + customQuery)
+                    # generate data for report
+                    # ------------------------
+                    mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn)
                     cursor = CONNECTION.cursor(buffered = True)
                     cursor.execute(mysql_search_query)
-                    mytable = pd.read_sql("SELECT * FROM isbn " + 
-                                            customQuery, CONNECTION)
+                    mytable = pd.read_sql("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn, CONNECTION)
                     pd.set_option('display.expand_frame_repr', False)
                     mytable2 = build_table(mytable,
                                          'grey_light',
@@ -1329,7 +1364,322 @@ def reportsMenu():
                     # generate html content
                     # ---------------------
                     html_content = f"<html> \
-                                    <head> <h2>Filtered Report - Filter: \
+                                    <head> <h2> ISBN22 Filtered Report Index \
+                                    <br>Filter: {cqn} \
+                                    </h2> \
+                                    <h3> <script>\
+                                    var timestamp = Date.now();\
+                                    var d = new Date(timestamp);\
+                                    document.write(d);\
+                                    </script>\
+                                    </h3>\
+                                    </head> \
+                                    <body> {mytable2} \
+                                    </body> \
+                                    </html>"
+                    with open("report/filt_report_index.html", "w") as html_file:
+                        html_file.write(html_content)
+                        print("Created")
+                    time.sleep(2)
+                    # display in browser
+                    # ------------------
+                    webbrowser.open_new_tab("report\\filt_report_index.html")
+                    print('')
+                    wait = input("Press ENTER to return")
+            # filter by type "search"
+            #----------------------
+            elif filt == "2":
+                cqn = '"search"'
+                print(Fore.GREEN + 'Filtered Report Index')
+                print(Fore.GREEN + '----------------------')
+                print(Style.RESET_ALL)
+                print('')     
+                mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value\
+                                        WHERE cqType_name = " + cqn)
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)    
+                mytable = from_db_cursor(cursor)
+                mytable.align = "l"
+                print(mytable)
+                print('')
+                # send report to browser
+                # -----------------------
+                printRep = input(Fore.YELLOW + 
+                                'To send this report to the browser for printing'
+                                ' or saving enter b or B, otherwise press '
+                                'enter to return: ')
+                print(Style.RESET_ALL)
+                if printRep == "b" or printRep == "B":
+                    # generate data for report
+                    # ------------------------
+                    mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_query)
+                    mytable = pd.read_sql("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn, CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    mytable2 = build_table(mytable,
+                                         'grey_light',
+                                         font_size = 'small',
+                                         font_family = 'Open Sans, courier',
+                                         text_align = 'left ')
+                    # generate html content
+                    # ---------------------
+                    html_content = f"<html> \
+                                    <head> <h2> ISBN22 Filtered Report Index \
+                                    <br>Filter: {cqn} \
+                                    </h2> \
+                                    <h3> <script>\
+                                    var timestamp = Date.now();\
+                                    var d = new Date(timestamp);\
+                                    document.write(d);\
+                                    </script>\
+                                    </h3>\
+                                    </head> \
+                                    <body> {mytable2} \
+                                    </body> \
+                                    </html>"
+                    with open("report/filt_report_index.html", "w") as html_file:
+                        html_file.write(html_content)
+                        print("Created")
+                    time.sleep(2)
+                    # display in browser
+                    # ------------------
+                    webbrowser.open_new_tab("report\\filt_report_index.html")
+                    print('')
+                    wait = input("Press ENTER to return")
+            # filter by type "list"
+            #----------------------
+            elif filt == "3":
+                cqn = '"list"'
+                print(Fore.GREEN + 'Filtered Report Index')
+                print(Fore.GREEN + '----------------------')
+                print(Style.RESET_ALL)
+                print('')     
+                mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value\
+                                        WHERE cqType_name = " + cqn)
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)    
+                mytable = from_db_cursor(cursor)
+                mytable.align = "l"
+                print(mytable)
+                print('')
+                # send report to browser
+                # -----------------------
+                printRep = input(Fore.YELLOW + 
+                                'To send this report to the browser for printing'
+                                ' or saving enter b or B, otherwise press '
+                                'enter to return: ')
+                print(Style.RESET_ALL)
+                if printRep == "b" or printRep == "B":
+                    # generate data for report
+                    # ------------------------
+                    mysql_search_query = ("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_query)
+                    mytable = pd.read_sql("SELECT cq_name AS \"report name\", \
+                                        cq_desc AS \"report description\", \
+                                        cqType_name AS \"report type\", \
+                                        cq_parameters AS \
+                                        \"parameters(0=no, 1=yes)\",\
+                                        cq_creator AS \"report orginator\", \
+                                        cq_created AS \"origination date\" \
+                                        FROM cQuery p INNER JOIN cqType c \
+                                        ON p.cq_type = c.cqType_value WHERE \
+                                        cqType_name = " + cqn, CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    mytable2 = build_table(mytable,
+                                         'grey_light',
+                                         font_size = 'small',
+                                         font_family = 'Open Sans, courier',
+                                         text_align = 'left ')
+                    # generate html content
+                    # ---------------------
+                    html_content = f"<html> \
+                                    <head> <h2> ISBN22 Filtered Report Index \
+                                    <br>Filter: {cqn} \
+                                    </h2> \
+                                    <h3> <script>\
+                                    var timestamp = Date.now();\
+                                    var d = new Date(timestamp);\
+                                    document.write(d);\
+                                    </script>\
+                                    </h3>\
+                                    </head> \
+                                    <body> {mytable2} \
+                                    </body> \
+                                    </html>"
+                    with open("report/filt_report_index.html", "w") as html_file:
+                        html_file.write(html_content)
+                        print("Created")
+                    time.sleep(2)
+                    # display in browser
+                    # ------------------
+                    webbrowser.open_new_tab("report\\filt_report_index.html")
+                    print('')
+                    wait = input("Press ENTER to return")         
+        # display report by name
+        # -----------------------
+        elif menuOption == '3':
+            os.system('cls')
+            now = datetime.datetime.now()
+            print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+            print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+            print("-----------------------".rjust(80))
+            print(Style.RESET_ALL)
+            report = input("Please enter the name of the report you wish to "
+                            "display: ")
+            report2 = report.strip('View')
+            cqdesc = ("SELECT cq_desc FROM cQuery WHERE cq_name = " + report2)
+            cursor2 = CONNECTION.cursor(buffered = True)
+            cursor2.execute(cqdesc)  
+            cqresult = cursor2.fetchall()
+            cq_filter = ("SELECT cq_filter FROM cQuery WHERE cq_name = " + report2)
+            cursor3 = CONNECTION.cursor(buffered = True)
+            cursor3.execute(cq_filter)  
+            cqFilter = cursor3.fetchall()
+            customQuery = ("SELECT * FROM " + report)
+            cursor = CONNECTION.cursor(buffered = True)
+            cursor.execute(customQuery)    
+            mytable = from_db_cursor(cursor)
+            mytable.align = "l"
+            print('')
+            print(mytable)
+            print('')
+            printRep = input(Fore.YELLOW + 'To send this report to the '
+                                'browser for printing or saving enter b  '
+                                'or B, otherwise press enter to return: ')
+            print(Style.RESET_ALL)
+            # send report to browser
+            # -----------------------
+            if printRep == "b" or printRep == "B":
+                mysql_search_query = (customQuery)
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(mysql_search_query)
+                mytable = pd.read_sql(customQuery, CONNECTION)
+                pd.set_option('display.expand_frame_repr', False)
+                mytable2 = build_table(mytable,
+                                     'grey_light',
+                                     font_size = 'small',
+                                     font_family = 'Open Sans, courier',
+                                     text_align = 'left ')
+                # generate html content
+                # ---------------------
+                html_content = f"<html> \
+                                <head> \
+                                <h2>ISBN22 Report {report} - Descrition: \
+                                {cqresult}<br>Filter: {cqFilter} \
+                                </h2> \
+                                <h3> <script>\
+                                var timestamp = Date.now();\
+                                var d = new Date(timestamp);\
+                                document.write(d);\
+                                </script>\
+                                </h3>\
+                                </head> \
+                                <body> {mytable2} \
+                                </body> \
+                                </html>"
+                with open("report/" + report + "_custom.html", "w") as html_file:
+                    html_file.write(html_content)
+                    print("Created")
+                time.sleep(2)
+                # display in browser
+                # ------------------
+                webbrowser.open_new_tab("report\\" + report + "_custom.html")
+                print('')
+        # create a new report (create a custom query)
+        # --------------------------------------------
+        if menuOption == '4':
+            os.system('cls')
+            print(Fore.GREEN + 'CREATE NEW REPORT QUERY')
+            print(Fore.GREEN + '-------------------------')
+            print(Style.RESET_ALL)
+            print('')
+            # define custom query
+            # -------------------    
+            customQuery = input("Please enter your query here,"
+            " note, query must follow valid SQL syntax:   ")
+            customQuery = customQuery.strip(';')
+            # test SQL syntax
+            # ----------------
+            if testSQL(customQuery) == 1:
+                print('')
+                print(Fore.RED + "There is an error in you MySQL syntax")
+                print('Please try again')
+                print(Style.RESET_ALL)
+            else:
+                cursor = CONNECTION.cursor(buffered = True)
+                cursor.execute(customQuery)    
+                mytable = from_db_cursor(cursor)
+                mytable.align = "l"
+                print('')
+                print(mytable)
+                print('')
+                printRep = input(Fore.YELLOW + 'To send this report to the '
+                                    'browser for printing or saving enter b  '
+                                    'or B, otherwise press enter to return: ')
+                print(Style.RESET_ALL)
+                # send report to browser
+                # -----------------------
+                if printRep == "b" or printRep == "B":
+                    mysql_search_query = (customQuery)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(mysql_search_query)
+                    mytable = pd.read_sql(customQuery, CONNECTION)
+                    pd.set_option('display.expand_frame_repr', False)
+                    mytable2 = build_table(mytable,
+                                         'grey_light',
+                                         font_size = 'small',
+                                         font_family = 'Open Sans, courier',
+                                         text_align = 'left ')
+                    # generate html content
+                    # ---------------------
+                    html_content = f"<html> \
+                                    <head> \
+                                    <h2>ISBN22 Report (Prefactory) - Filter: \
                                     {customQuery} \
                                     </h2> \
                                     <h3> <script>\
@@ -1342,118 +1692,114 @@ def reportsMenu():
                                     <body> {mytable2} \
                                     </body> \
                                     </html>"
-                    with open("report/all_filtered.html", "w") as html_file:
+                    with open("report/prefactory_custom.html", "w") as html_file:
                         html_file.write(html_content)
                         print("Created")
                     time.sleep(2)
                     # display in browser
                     # ------------------
-                    webbrowser.open_new_tab("report\\all_filtered.html")
+                    webbrowser.open_new_tab("report\\prefactory_custom.html")
                     print('')
-                print("The custom query was " + Fore.RED + customQuery + 
-                        Style.RESET_ALL + " would you like to save this query?")
+                # option to save custom query to report index
+                # --------------------------------------------
+                print("The custom query was \n\n" + Fore.RED + customQuery + 
+                        Style.RESET_ALL + "\n\nWould you like to save this"
+                        " query?")
                 saveQ = input("If you want to save this query, enter y or Y: ")
                 if saveQ == 'y' or saveQ == 'Y':
-                    saveQname = input("Please enter a simple query name: ")
                     saveQdesc = input("Please enter a brief description of the "
                                 "query: ")
                     print('')
-                    print("Available types are:")
-                    print("--------------------")
-                    mysql_search_type = ("SELECT * FROM cqType")
-                    cursor = CONNECTION.cursor(buffered = True)
-                    cursor.execute(mysql_search_type)
-                    mytable = pd.read_sql("select * from cqType", CONNECTION)
-                    pd.set_option('display.expand_frame_repr', False)
-                    print(mytable)
+                    # define if parameters need to entered for query
+                    # -----------------------------------------------
+                    para = input("Does this query require user-defined "
+                                "parameters?\n"
+                                "Enter 'y' or 'Y' for yes: ")
+                    if para == 'y' or para == 'Y':
+                        cqPara = 1
+                    else:
+                        cqPara = 0
                     print('')
-                    saveQtype = input("Please enter a query type: ")
-                    #saveQuser = input("User: ")
-                    today = date.today()
-                    data = (saveQname, saveQdesc, saveQtype, mysql_search_query,\
-                            USER, today)
-                    cq_insert_query = (
-                    "INSERT INTO cQuery (cq_name, cq_desc, cq_type, cq_query,\
-                                        cq_creator, cq_created)"
-                    "VALUES (%s, %s, %s, %s, %s, %s)"
-                    )
-                    cursor = CONNECTION.cursor()
-                    cursor.execute(cq_insert_query, data)
-                    CONNECTION.commit()
-                    print('')
-                    print(Fore.YELLOW + "cQuery "+ saveQname + " created")
-                    print(Style.RESET_ALL)
-                    
+                    # display options for query types
+                    # ================================       
+                    # MySQL query to update VIEW if types are added
+                    # ==============================================
+                    # CREATE OR REPLACE VIEW cqTypeView AS SELECT cqType_value 
+                    # AS "value", cqType_name AS "name", cqType_desc 
+                    # AS "description" FROM cqType;
+                    goAgain3 = 1
+                    while goAgain3 == 1:
+                        print("Available types are:")
+                        print("--------------------")
+                        print('')
+                        mysql_search_query = ("SELECT cqType_value, cqType_name,\
+                                            cqType_desc FROM cqType")
+                        cursor = CONNECTION.cursor(buffered = True)
+                        cursor.execute(mysql_search_query)    
+                        mytable = from_db_cursor(cursor)
+                        mytable.align = "l"
+                        print(mytable)
+                        print('')
+                        print('')                       
+                        saveQtype = input("Please enter a value for the query "
+                                        "type: ") 
+                        # require user selection to match one of the available 
+                        # types
+                        # ======================================================
+                        # action to follow is selection matches available type
+                        # ======================================================     
+                        if saveQtype == '1' or saveQtype == '2' or \
+                            saveQtype == '3':
+                            #    goAgain2 = 0           
+                            today = date.today()
+                            mysql_cqid_query = ("SELECT cq_id FROM cQuery ORDER \
+                                                 BY cq_id\
+                                                 DESC LIMIT 1")
+                            cursor = CONNECTION.cursor(buffered = True)
+                            cursor.execute(mysql_cqid_query)
+                            result = cursor.fetchall()
+                            for row in result:
+                                cqid = (row[0]) 
+                                cqid += 1
+                            saveQname = str(cqid)
+                            nq = ("SELECT * FROM " + saveQname + "View")
+                            createView = ("CREATE OR REPLACE VIEW " + \
+                                        saveQname + "View AS " + customQuery)
+                            cursor = CONNECTION.cursor()
+                            cursor.execute(createView)
+                            CONNECTION.commit()
+                            data = (saveQname, saveQdesc, saveQtype, customQuery, \
+                                    nq, USER, today, cqPara)
+                            cq_insert_query = ("INSERT INTO cQuery (cq_name, \
+                                            cq_desc, cq_type,cq_filter, cq_query, \
+                                            cq_creator, cq_created, cq_parameters)"
+                            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")     
+                            cursor = CONNECTION.cursor()
+                            cursor.execute(cq_insert_query, data)
+                            CONNECTION.commit()
+                            print('')
+                            print(Fore.YELLOW + "cQuery "+ saveQname +  \
+                                "View created")
+                            print(Style.RESET_ALL)
+                            goAgain3 = 0
+                        # action to follow if selection does not match available 
+                        # types (notify user and return them to type selection)
+                        # ======================================================    
+                        else:
+                            print(Fore.RED + 'Please make a valid selection')
+                            cancelSelc = input("Press any key to continue or 0 to"
+                                                " CANCEL: ")
+                            print(Style.RESET_ALL)
+                            if cancelSelc == '0':
+                                goAgain3 = 0 
 
 
+                
 
 
+        elif menuOption == '0':    
+            goAgain = 0                 
 
-
-
-
-            else:
-                # get data for report
-                # -------------------
-                filterValue = input("select value to filter by: ")
-                mysql_search_query = ("SELECT * FROM isbn WHERE " + fil + " = " + 
-                                    filterValue)
-                cursor = CONNECTION.cursor(buffered = True)
-                cursor.execute(mysql_search_query)    
-                mytable = from_db_cursor(cursor)
-                print('')
-                # display report
-                # --------------
-                print(mytable)
-                print('')
-                printRep = input(Fore.YELLOW + 'To send this report to the browser '
-                                'for printing or saving enter b or B, otherwise '
-                                'press enter to return: ')
-                print(Style.RESET_ALL)
-                # send report to browser
-                # -----------------------
-                if printRep == "b" or printRep == "B":
-                    mysql_search_query = ("SELECT * FROM isbn WHERE " + fil + 
-                                        " = " + filterValue)
-                    cursor = CONNECTION.cursor(buffered = True)
-                    cursor.execute(mysql_search_query)
-                    mytable = pd.read_sql("SELECT * FROM isbn WHERE " + fil + 
-                                        " = " + filterValue, CONNECTION)
-                    pd.set_option('display.expand_frame_repr', False)
-                    mytable2 = build_table(mytable,
-                                         'grey_light',
-                                         font_size = 'small',
-                                         font_family = 'Open Sans, courier',
-                                         text_align = 'left ')
-                    # generate html content
-                    # ---------------------
-                    html_content = f"<html> \
-                                    <head> <h2>Filtered Report - Filter: \
-                                    {mysql_search_query} \
-                                    </h2> \
-                                    <h3> <script>\
-                                    var timestamp = Date.now();\
-                                    var d = new Date(timestamp);\
-                                    document.write(d);\
-                                    </script>\
-                                    </h3>\
-                                    </head> \
-                                    <body> {mytable2} \
-                                    </body> \
-                                    </html>"
-                    with open("report/all_filtered.html", "w") as html_file:
-                        html_file.write(html_content)
-                        print("Created")
-                    time.sleep(2)
-                    # display in browser
-                    # ------------------
-                    webbrowser.open_new_tab("report\\all_filtered.html")
-                    print('')
-                    wait = input("Press ENTER to return")
-            wait = input("Press ENTER to return")
-
-        elif menuOption == '0':
-            goAgain = 0   
 
 def searchService():
     """
@@ -1482,6 +1828,25 @@ def searchService():
         SERVICE = "openl"
     print(Fore.YELLOW + "Service Set To: " + SERVICE)
     print(Style.RESET_ALL)
+
+def testSQL(tquery):
+    """
+    ============================================================================
+    Function:       testSQL(tquery)
+    Purpose:        tests that a MySQL query functions and is written in the 
+                    correct syntax
+    Parameter(s):   MySQL query (tyquery)
+    Return:         1 if tquery contains a MySQL error, nothing if not
+    ============================================================================
+    """
+    test_query = (tquery)
+    try:
+        cursor = CONNECTION.cursor(buffered = True)
+        cursor.execute(test_query)
+    except mysql.connector.errors.ProgrammingError as err:
+        if err:
+            pass
+            return (1)
 
 # ==============================================================================
 #  main entry point for program
