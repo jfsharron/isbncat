@@ -1569,67 +1569,91 @@ def newReport():
             print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
             print("-----------------------".rjust(80))
             print(Style.RESET_ALL)
+            # specify report
+            # ---------------
             report = input("Please enter the name of the report you wish to "
                             "display: ")
             report2 = report.strip('View')
-            cqdesc = ("SELECT cq_desc FROM cQuery WHERE cq_name = " + report2)
-            cursor2 = CONNECTION.cursor(buffered = True)
-            cursor2.execute(cqdesc)  
-            cqresult = cursor2.fetchall()
-            cq_filter = ("SELECT cq_filter FROM cQuery WHERE cq_name = " + report2)
-            cursor3 = CONNECTION.cursor(buffered = True)
-            cursor3.execute(cq_filter)  
-            cqFilter = cursor3.fetchall()
-            customQuery = ("SELECT * FROM " + report)
+            # check if report requires parameters
+            # ------------------------------------
+            paraQuery = ("SELECT cq_parameters FROM cQuery WHERE cq_id = "+report2)
             cursor = CONNECTION.cursor(buffered = True)
-            cursor.execute(customQuery)    
-            mytable = from_db_cursor(cursor)
-            mytable.align = "l"
-            print('')
-            print(mytable)
-            print('')
-            printRep = input(Fore.YELLOW + 'To send this report to the '
-                                'browser for printing or saving enter b  '
-                                'or B, otherwise press enter to return: ')
-            print(Style.RESET_ALL)
-            # send report to browser
-            # -----------------------
-            if printRep == "b" or printRep == "B":
-                mysql_search_query = (customQuery)
-                cursor = CONNECTION.cursor(buffered = True)
-                cursor.execute(mysql_search_query)
-                mytable = pd.read_sql(customQuery, CONNECTION)
-                pd.set_option('display.expand_frame_repr', False)
-                mytable2 = build_table(mytable,
-                                     'grey_light',
-                                     font_size = 'small',
-                                     font_family = 'Open Sans, courier',
-                                     text_align = 'left ')
-                # generate html content
-                # ---------------------
-                html_content = f"<html> \
-                                <head> \
-                                <h2>ISBN22 Report {report} - Descrition: \
-                                {cqresult}<br>Filter: {cqFilter} \
-                                </h2> \
-                                <h3> <script>\
-                                var timestamp = Date.now();\
-                                var d = new Date(timestamp);\
-                                document.write(d);\
-                                </script>\
-                                </h3>\
-                                </head> \
-                                <body> {mytable2} \
-                                </body> \
-                                </html>"
-                with open("report/" + report + "_custom.html", "w") as html_file:
-                    html_file.write(html_content)
-                    print("Created")
-                time.sleep(2)
-                # display in browser
-                # ------------------
-                webbrowser.open_new_tab("report\\" + report + "_custom.html")
-                print('')
+            cursor.execute(paraQuery)
+            para_result = cursor.fetchall()
+            for row in para_result:
+                callFunct = (row[0])
+                callFunct = str(callFunct)
+                # if report trquires parameters, create function call to complete
+                #  processing of report
+                # ----------------------
+                if callFunct  == '1':
+                    report3 = ("view" + report2)
+                    eval(report3 + "()")
+                # if report does not require parameters, process normally
+                # --------------------------------------------------------    
+                else:            
+                    cqdesc = ("SELECT cq_desc FROM cQuery WHERE cq_name = " + \
+                             report2)
+                    cursor2 = CONNECTION.cursor(buffered = True)
+                    cursor2.execute(cqdesc)  
+                    cqresult = cursor2.fetchall()
+                    cq_filter = ("SELECT cq_filter FROM cQuery WHERE cq_name = "\
+                                + report2)
+                    cursor3 = CONNECTION.cursor(buffered = True)
+                    cursor3.execute(cq_filter)  
+                    cqFilter = cursor3.fetchall()
+                    customQuery = ("SELECT * FROM " + report)
+                    cursor = CONNECTION.cursor(buffered = True)
+                    cursor.execute(customQuery)    
+                    mytable = from_db_cursor(cursor)
+                    mytable.align = "l"
+                    print('')
+                    print(mytable)
+                    print('')
+                    printRep = input(Fore.YELLOW + 'To send this report to the '
+                                        'browser for printing or saving enter b  '
+                                        'or B, otherwise press enter to return: ')
+                    print(Style.RESET_ALL)
+                    # send report to browser
+                    # -----------------------
+                    if printRep == "b" or printRep == "B":
+                        mysql_search_query = (customQuery)
+                        cursor = CONNECTION.cursor(buffered = True)
+                        cursor.execute(mysql_search_query)
+                        mytable = pd.read_sql(customQuery, CONNECTION)
+                        pd.set_option('display.expand_frame_repr', False)
+                        mytable2 = build_table(mytable,
+                                             'grey_light',
+                                             font_size = 'small',
+                                             font_family = 'Open Sans, courier',
+                                             text_align = 'left ')
+                        # generate html content
+                        # ---------------------
+                        html_content = f"<html> \
+                                        <head> \
+                                        <h2>ISBN22 Report {report} - Descrition: \
+                                        {cqresult}<br>Filter: {cqFilter} \
+                                        </h2> \
+                                        <h3> <script>\
+                                        var timestamp = Date.now();\
+                                        var d = new Date(timestamp);\
+                                        document.write(d);\
+                                        </script>\
+                                        </h3>\
+                                        </head> \
+                                        <body> {mytable2} \
+                                        </body> \
+                                        </html>"
+                        with open("report/" + report + "_custom.html", "w") as \
+                                    html_file:
+                                    html_file.write(html_content)
+                        print("Created")
+                        time.sleep(2)
+                        # display in browser
+                        # ------------------
+                        webbrowser.open_new_tab("report\\" + report + \
+                                                "_custom.html")
+                        print('')
         # create a new report (create a custom query)
         # --------------------------------------------
         if menuOption == '4':
@@ -1847,6 +1871,121 @@ def testSQL(tquery):
         if err:
             pass
             return (1)
+
+# ==============================================================================
+# paramaterized report functions
+# ==============================================================================
+            
+def view2091():
+    """
+    ============================================================================
+    Function:       view2091()
+    Purpose:        creates a paramaterized report as defined within the report 
+                    index
+    Parameter(s):   -None- (function name defines view name, 
+                            i.e. view2091 = 2091View
+                            -and cQuery.cq_name, i.e. 2091)
+    Return:         -None- (outputs report with user defined parameters) 
+    ============================================================================
+    """
+    # ==========================================================================
+    # 2091 query
+    # -----------
+    # SELECT * FROM isbn WHERE year = 0000
+    # ==========================================================================
+
+    os.system('cls')
+
+    now = datetime.datetime.now()
+    name = '2091View'
+    print(Fore.GREEN + now.strftime("%Y-%m-%d %H:%M:%S").rjust(80))
+    print(("isbn-22 " + VERNO + " " + VERNA).rjust(80))
+    print("-----------------------".rjust(80))
+    print('')
+    print(name)
+    print('------------------')
+    print(Style.RESET_ALL)
+    # retreive query desc from cQuery table
+    # --------------------------------------
+    name2 = name.strip('View')
+    descQuery = ("SELECT cq_desc FROM cQuery WHERE cq_name = " + name2)
+    cursor3 = CONNECTION.cursor(buffered = True)
+    cursor3.execute(descQuery)  
+    descFilter = cursor3.fetchall()
+    # input filter
+    # ------------
+    print('')
+    print("This query will allow you to select isbn's published in a specific" 
+        " year.")
+    print('')
+    year = input("What year would you like to query: ")
+    # execute query and display output
+    # --------------------------------
+    create2091View = ("CREATE OR REPLACE VIEW 2091View AS SELECT * FROM isbn \
+                     WHERE year = " + year)
+    cursor = CONNECTION.cursor(buffered = True)
+    cursor.execute(create2091View)
+    viewQuery = ("SELECT * FROM 2091View") 
+    cursor = CONNECTION.cursor(buffered = True)
+    cursor.execute(viewQuery)   
+    mytable = from_db_cursor(cursor)
+    mytable.align = "l"
+    print('')
+    print(mytable)
+    print('')
+    printRep = input(Fore.YELLOW + 'To send this report to the '
+                        'browser for printing or saving enter b  '
+                        'or B, otherwise press enter to return: ')
+    print(Style.RESET_ALL)
+    # send report to browser
+    # -----------------------
+    if printRep == "b" or printRep == "B":
+        mysql_search_query = (viewQuery)
+        cursor = CONNECTION.cursor(buffered = True)
+        cursor.execute(mysql_search_query)
+        mytable = pd.read_sql(viewQuery, CONNECTION)
+        pd.set_option('display.expand_frame_repr', False)
+        mytable2 = build_table(mytable,
+                             'grey_light',
+                             font_size = 'small',
+                             font_family = 'Open Sans, courier',
+                             text_align = 'left ')
+        # generate html content
+        # ---------------------
+        html_content = f"<html> \
+                        <head> \
+                        <h2>ISBN22 Report {name} - Descrition: \
+                        {descFilter}<br>Filter: {create2091View} \
+                        </h2> \
+                        <h3> <script>\
+                        var timestamp = Date.now();\
+                        var d = new Date(timestamp);\
+                        document.write(d);\
+                        </script>\
+                        </h3>\
+                        </head> \
+                        <body> {mytable2} \
+                        </body> \
+                        </html>"
+        with open("report/" + name + "_custom.html", "w") as html_file:
+            html_file.write(html_content)
+            print("Created")
+        time.sleep(2)
+        # display in browser
+        # ------------------
+        webbrowser.open_new_tab("report\\" + name + "_custom.html")
+        print('')
+
+
+
+
+
+
+
+
+
+
+
 
 # ==============================================================================
 #  main entry point for program
