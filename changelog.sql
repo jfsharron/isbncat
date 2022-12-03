@@ -129,3 +129,7 @@ ALTER TABLE cQuery MODIFY cq_parameters TINYINT(1) NOT NULL;
 --add column "cq_filter" to cQuery to hold actual query text
 USE isbn22;
 ALTER TABLE cQuery ADD COLUMN cq_filter VARCHAR(500) AFTER cq_type;
+
+-- MySQL dump performed 11/14/2022 isbn22dump12_03_2022.sql
+
+
